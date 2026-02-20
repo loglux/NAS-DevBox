@@ -6,7 +6,7 @@ usage() {
 Usage: ./devbox.sh [options]
 
 Options:
-  --user NAME            Devbox username (default: loglux)
+  --user NAME            Devbox username (default: dev)
   --pass PASSWORD        Devbox user password (default: changeme)
   --ssh-port PORT        Host SSH port to expose (default: 2202)
   --docker-gid GID       GID of docker socket on NAS (default: 1000)
@@ -21,7 +21,7 @@ Examples:
 USAGE
 }
 
-DEVBOX_USER="loglux"
+DEVBOX_USER="dev"
 DEVBOX_PASS="changeme"
 DEVBOX_SSH_PORT="2202"
 DOCKER_GID="1000"

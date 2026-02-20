@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        DEVBOX_USER: ${DEVBOX_USER:-loglux}
+        DEVBOX_USER: ${DEVBOX_USER:-dev}
         DEVBOX_PASS: ${DEVBOX_PASS:-changeme}
         DOCKER_GID: ${DOCKER_GID:-1000}
     container_name: ${DEVBOX_CONTAINER_NAME:-devbox}

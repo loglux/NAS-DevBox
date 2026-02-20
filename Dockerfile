@@ -31,7 +31,7 @@ RUN apt update && \
     apt clean
 
 # Build-time configuration
-ARG DEVBOX_USER=loglux
+ARG DEVBOX_USER=dev
 ARG DEVBOX_PASS=changeme
 ARG DOCKER_GID=1000
 
