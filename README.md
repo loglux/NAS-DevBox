@@ -84,6 +84,8 @@ Defaults live in `devbox.sh`, or pass flags on the command line:
 - `DEVBOX_PROJECTS_DIR`
 - `DEVBOX_CONTAINER_NAME`
 
+Default user is `dev` (unless you override `--user` or `DEVBOX_USER`).
+
 Recreate:
 
 ```sh
@@ -96,10 +98,6 @@ Recreate:
 docker ps
 ```
 
-## Compose Version
-
-This setup uses Docker Compose v2 (`docker compose`) via the
-`docker-compose-plugin` package.
 
 ## Optional: Passwordless sudo
 
