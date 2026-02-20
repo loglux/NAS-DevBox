@@ -4,6 +4,7 @@ FROM ubuntu:24.04
 RUN apt update && \
     apt install -y \
         openssh-server \
+        openssh-client \
         sudo \
         locales \
         build-essential \
@@ -17,6 +18,7 @@ RUN apt update && \
         net-tools \
         ca-certificates \
         bash-completion \
+        tmux \
         gnupg && \
     install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
