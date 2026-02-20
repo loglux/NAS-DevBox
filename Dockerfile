@@ -8,7 +8,7 @@ RUN apt update && \
         docker.io \
         locales \
         build-essential \
-        docker-compose \
+        docker-compose-plugin \
         git \
         curl \
         wget \

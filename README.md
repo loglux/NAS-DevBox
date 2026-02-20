@@ -96,6 +96,11 @@ Recreate:
 docker ps
 ```
 
+## Compose Version
+
+This setup uses Docker Compose v2 (`docker compose`) via the
+`docker-compose-plugin` package.
+
 ## Optional: Passwordless sudo
 
 If you want `sudo` without a password inside the dev container:
