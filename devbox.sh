@@ -70,7 +70,8 @@ docker exec -u 0 "${DEVBOX_CONTAINER_NAME}" chown -R "${DEVBOX_USER}:${DEVBOX_US
 echo
 echo "Container is ready."
 echo "+------------------------------------------------------------+"
-echo "| Default password for ${DEVBOX_USER} is '${DEVBOX_PASS}'."
-echo "| Change it at first login or run:"
+echo "| Default password is 'changeme' unless you set --pass."
+echo "| Please change it before using SSH."
+echo "| You can run:"
 echo "|   docker exec -it ${DEVBOX_CONTAINER_NAME} passwd ${DEVBOX_USER}"
 echo "+------------------------------------------------------------+"
