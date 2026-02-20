@@ -1,0 +1,18 @@
+services:
+  devbox:
+    build:
+      context: .
+      args:
+        DEVBOX_USER: ${DEVBOX_USER:-loglux}
+        DEVBOX_PASS: ${DEVBOX_PASS:-changeme}
+        DOCKER_GID: ${DOCKER_GID:-1000}
+    container_name: ${DEVBOX_CONTAINER_NAME:-devbox}
+
+    volumes:
+      - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    ports:
+      - "${DEVBOX_SSH_PORT:-2202}:22"
+
+    restart: always
