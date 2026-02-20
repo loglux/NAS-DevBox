@@ -51,23 +51,16 @@ git clone https://github.com/loglux/NAS-DevBox.git .
 ./devbox.sh --user dev --ssh-port 2222 --projects-dir /volume1/projects
 ```
 
+3. Optional: change the default password (`changeme`) from the NAS host:
+
+```sh
+docker exec -it devbox passwd dev
+```
+
 Connect:
 
 ```sh
 ssh dev@NAS_IP -p 2222
-```
-
-Default password is `changeme` unless you set `--pass`. Change it on first
-login:
-
-```sh
-passwd
-```
-
-You can also change it from the NAS host without SSH:
-
-```sh
-docker exec -it devbox passwd dev
 ```
 
 Work in `/workspace` inside the container. It maps to the projects directory
