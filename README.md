@@ -120,6 +120,11 @@ You can configure DevBox using command-line flags or environment variables.
 
 Flags override environment variables.
 
+You can change any parameter at rebuild time by passing new flags. Running
+`./devbox.sh` with no flags uses the defaults from `devbox.sh` (it does not
+remember previous values). If you want the same settings as last time, pass
+the same flags again or edit the defaults in `devbox.sh`.
+
 ---
 
 ## Recreate the container
