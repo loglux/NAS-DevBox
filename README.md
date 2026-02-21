@@ -1,13 +1,19 @@
-# NAS DevBox
+# NAS Development Box
 
-Run a full Linux development environment on your NAS without modifying the
-NAS OS. You work in a container, while Docker and storage stay on the host.
-This repo provides the container setup and a helper script.
+Run a full Linux development environment on your NAS — safely, inside a container — without modifying the NAS operating system.
 
-SSH into an Ubuntu dev container on a NAS and manage host Docker from inside
-the container.
+DevBox lets you:
 
-## Architecture
+- SSH into a full Ubuntu environment
+- Keep Docker running on the NAS host
+- Store projects directly on NAS storage
+- Manage host Docker from inside the dev container
+
+Ideal for turning a NAS into a lightweight remote development machine.
+
+---
+
+## How it works
 
 ```
 Your PC ── SSH ──► Dev Container (Ubuntu)
@@ -19,89 +25,133 @@ Your PC ── SSH ──► Dev Container (Ubuntu)
                  Project Containers
 ```
 
-The NAS runs Docker. The dev container provides the full Linux toolchain.
-Projects live on the NAS and are mounted into the container at `/workspace`,
-while the Docker socket lets you manage host containers as if you were logged
-in directly.
+- The NAS runs Docker normally
+- DevBox runs an Ubuntu container with development tools
+- Your projects live on the NAS and are mounted into `/workspace`
+- The container can control host Docker via the Docker socket
+
+No changes to the NAS OS are required.
+
+---
 
 ## Requirements
 
 - NAS with Docker installed
 - SSH access to the NAS
-- Projects directory on the NAS (choose any path; example: `/volume1/projects`)
+- A directory for projects on the NAS (e.g. `/volume1/projects`)
+
+---
 
 ## Quick Start
 
-1. Choose or create a projects directory on the NAS host. This is where your
-   code will live. Example:
+### 1. Create a projects directory
 
-```sh
+```
 mkdir -p /volume1/projects
 ```
 
-2. Clone this repo anywhere on the NAS (it only stores the container files),
-   then start the container. Use an SSH port that is not `22` (the host SSH
-   service usually uses `22`). Pick the container username you want, and pass
-   the projects directory path so it gets mounted into `/workspace`.
+---
 
-```sh
+### 2. Clone the repository
+
+```
 mkdir -p /volume1/home/devbox
 cd /volume1/home/devbox
 git clone https://github.com/loglux/NAS-DevBox.git .
-./devbox.sh --user dev --ssh-port 2222 --projects-dir /volume1/projects
 ```
 
-3. Optional: change the default password (`changeme`) from the NAS host:
+---
 
-```sh
-docker exec -it devbox passwd dev
+### 3. Start the dev container
+
+Choose:
+
+- a container username
+- an SSH port (not 22)
+- your projects directory
+
+```
+./devbox.sh \
+  --user dev \
+  --ssh-port 2222 \
+  --projects-dir /volume1/projects
 ```
 
-Connect:
+---
 
-```sh
+### 4. Connect via SSH
+
+```
 ssh dev@NAS_IP -p 2222
 ```
 
-Work in `/workspace` inside the container. It maps to the projects directory
-on the NAS host that you pass via `--projects-dir` (or `DEVBOX_PROJECTS_DIR`).
+Your projects will be available inside the container at:
+
+```
+/workspace
+```
+
+---
+
+## Changing the default password
+
+Default password: `changeme`
+
+Change it from the NAS host:
+
+```
+docker exec -it devbox passwd dev
+```
+
+---
 
 ## Configuration
 
-Defaults live in `devbox.sh`, or pass flags on the command line:
+You can configure DevBox using command-line flags or environment variables.
 
-- `DEVBOX_USER`
-- `DEVBOX_PASS`
-- `DEVBOX_SSH_PORT`
-- `DOCKER_GID`
-- `DEVBOX_PROJECTS_DIR`
-- `DEVBOX_CONTAINER_NAME`
+|Variable|Description|Default|
+|---|---|---|
+|DEVBOX_USER|Container username|dev|
+|DEVBOX_PASS|User password|changeme|
+|DEVBOX_SSH_PORT|SSH port|2222|
+|DOCKER_GID|Docker group ID|auto|
+|DEVBOX_PROJECTS_DIR|Projects path on NAS|— (required)|
+|DEVBOX_CONTAINER_NAME|Container name|devbox|
 
-Default user is `dev` (unless you override `--user` or `DEVBOX_USER`).
+Flags override environment variables.
 
-Recreate:
+---
 
-```sh
+## Recreate the container
+
+```
 ./devbox.sh --recreate --user dev --pass 'StrongPass'
 ```
 
-## Check Docker Access
+---
 
-```sh
+## Verify Docker access
+
+Inside the container:
+
+```
 docker ps
 ```
 
+You should see containers running on the NAS host.
+
+---
 
 ## Optional: Passwordless sudo
 
-If you want `sudo` without a password inside the dev container:
+Inside the dev container:
 
-```sh
+```
 sudo visudo
 ```
 
-Add this line (replace `dev` with your user):
+Add:
 
-```conf
+```
 dev ALL=(ALL) NOPASSWD:ALL
 ```
