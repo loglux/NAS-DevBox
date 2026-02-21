@@ -125,8 +125,12 @@ Flags override environment variables.
 ## Recreate the container
 
 ```
-./devbox.sh --recreate --user dev --pass 'StrongPass'
+./devbox.sh --recreate --user dev --ssh-port 2202 --projects-dir /volume1/projects
 ```
+
+Recreate builds a fresh container. The user and password are reset to the
+values you pass (or the defaults). If you do not pass `--pass`, it will revert
+to `changeme` and should be changed again.
 
 ---
 
