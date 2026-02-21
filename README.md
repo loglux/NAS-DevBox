@@ -213,4 +213,4 @@ This setup is useful if you want to:
 
 ## License
 
-Add a licence (MIT, Apache-2.0, etc.).
+MIT
