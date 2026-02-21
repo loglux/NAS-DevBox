@@ -11,6 +11,7 @@ RUN apt update && \
         git \
         curl \
         wget \
+        shellcheck \
         nano \
         vim \
         htop \

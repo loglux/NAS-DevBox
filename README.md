@@ -103,7 +103,8 @@ Your projects will be available inside the container at:
 - Username: as specified with `--user`
 - Password: `changeme`
 
-Change the password immediately.
+`changeme` is an intentional bootstrap placeholder required for first login.
+Change it immediately after installation.
 
 From the NAS host:
 
@@ -124,6 +125,24 @@ docker ps
 ```
 
 You should see containers running on the NAS host.
+
+---
+
+## Lint
+
+Run local lint checks before commit:
+
+```bash
+make lint
+```
+
+What it checks:
+
+- `bash -n devbox.sh`
+- `shellcheck devbox.sh`
+- `docker compose config`
+
+If `shellcheck` is missing on your host, install it first or run lint inside DevBox image where it is preinstalled.
 
 ---
 
