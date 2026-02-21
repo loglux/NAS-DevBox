@@ -16,7 +16,7 @@ Options:
   -h, --help             Show this help
 
 Examples:
-  ./devbox.sh --user dev --ssh-port 2222
+  ./devbox.sh --user dev --ssh-port 2202
   ./devbox.sh --recreate --user dev --pass 'StrongPass'
 USAGE
 }

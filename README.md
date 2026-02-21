@@ -67,13 +67,13 @@ git clone https://github.com/loglux/NAS-DevBox.git .
 Choose:
 
 - a container username
-- an SSH port (not 22)
+- an SSH port (not 22, default is 2202)
 - your projects directory
 
 ```
 ./devbox.sh \
   --user dev \
-  --ssh-port 2222 \
+  --ssh-port 2202 \
   --projects-dir /volume1/projects
 ```
 
@@ -82,7 +82,7 @@ Choose:
 ### 4. Connect via SSH
 
 ```
-ssh dev@NAS_IP -p 2222
+ssh dev@NAS_IP -p 2202
 ```
 
 Your projects will be available inside the container at:
@@ -113,8 +113,8 @@ You can configure DevBox using command-line flags or environment variables.
 |---|---|---|
 |DEVBOX_USER|Container username|dev|
 |DEVBOX_PASS|User password|changeme|
-|DEVBOX_SSH_PORT|SSH port|2222|
-|DOCKER_GID|Docker group ID|auto|
+|DEVBOX_SSH_PORT|SSH port|2202|
+|DOCKER_GID|Docker group ID|1000|
 |DEVBOX_PROJECTS_DIR|Projects path on NAS|— (required)|
 |DEVBOX_CONTAINER_NAME|Container name|devbox|
 
