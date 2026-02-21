@@ -78,9 +78,19 @@ Choose:
 ```bash
 ./devbox.sh \
   --user dev \
+  --pass 'changeme' \
   --ssh-port 2202 \
   --projects-dir /volume1/projects
 ```
+
+What `devbox.sh` does:
+
+- passes your parameters to Docker build/runtime
+- builds or rebuilds the DevBox image
+- starts the container in background mode
+- mounts your NAS projects directory to `/workspace`
+- connects container to host Docker via `/var/run/docker.sock`
+- if `--recreate` is used, removes old container before fresh start
 
 ---
 
@@ -125,24 +135,6 @@ docker ps
 ```
 
 You should see containers running on the NAS host.
-
----
-
-## Lint
-
-Run local lint checks before commit:
-
-```bash
-make lint
-```
-
-What it checks:
-
-- `bash -n devbox.sh`
-- `shellcheck devbox.sh`
-- `docker compose config`
-
-If `shellcheck` is missing on your host, install it first or run lint inside DevBox image where it is preinstalled.
 
 ---
 
