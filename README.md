@@ -4,6 +4,11 @@ Run a full Linux development environment on your NAS — safely inside a contain
 
 NAS DevBox turns your NAS into a remote Linux workstation while keeping Docker and storage on the host.
 
+## Origin
+
+This project started from the architecture described in this article:
+- https://www.linkedin.com/pulse/turning-nas-full-linux-development-environment-docker-sorokin-6o9oe/
+
 ## Key features
 
 - Full Ubuntu environment accessible via SSH
