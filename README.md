@@ -76,20 +76,39 @@ git clone https://github.com/loglux/NAS-DevBox.git .
 
 ---
 
-### 3. Start The Development Container
+### 3. Configure `.env` (Recommended)
 
-Choose:
-
-- a username
-- an SSH port (must not be 22)
-- your projects directory
+Use `.env` as the primary configuration source so recreate/start commands stay short and consistent.
 
 ```bash
-./devbox.sh \
-  --user dev \
-  --pass 'changeme' \
-  --ssh-port 2202 \
-  --projects-dir /volume1/projects
+cp .env.example .env
+# edit .env and set at least:
+# DEVBOX_USER, DEVBOX_PASS, DEVBOX_SSH_PORT, DEVBOX_PROJECTS_DIR
+# optionally: DEVBOX_HOME_DIR, DEVBOX_START_DIR, DEVBOX_PASSWORDLESS_SUDO
+```
+
+`devbox.sh` loads config in this order:
+
+1. script defaults
+2. `./.env`
+3. `./.env.local` (optional override)
+4. `--env-file <path>` (if provided)
+5. CLI flags (highest priority)
+
+---
+
+### 4. Start The Development Container
+
+Minimal start:
+
+```bash
+./devbox.sh
+```
+
+Full profile (main + playwright + AI tools):
+
+```bash
+./devbox.sh --playwright --post-install ai
 ```
 
 What `devbox.sh` does:
@@ -103,10 +122,10 @@ What `devbox.sh` does:
 
 ---
 
-### 4. Connect Via SSH
+### 5. Connect Via SSH
 
 ```bash
-ssh dev@NAS_IP -p 2202
+ssh <user>@NAS_IP -p <ssh_port>
 ```
 
 Your projects are available inside the container at:
@@ -175,10 +194,7 @@ Important:
 ### Recommended Recreate Command
 
 ```bash
-./devbox.sh --recreate \
-  --user dev \
-  --ssh-port 2202 \
-  --projects-dir /volume1/projects
+./devbox.sh --recreate
 ```
 
 ---
@@ -372,18 +388,12 @@ This allows every user to keep their own tool stack without forcing it into the 
 
 ### Keep Password/Settings Across Recreate Via `.env`
 
-Use a local env file so you don't have to pass `--pass` every time:
+If you keep stable values in `.env`, recreate stays one command and does not require retyping flags.
 
 ```bash
-cd /volume1/home/simulacra/devbox
 cp .env.example .env
-# edit .env and set DEVBOX_PASS, DEVBOX_USER, UID/GID, ports, paths
+# edit .env once and keep your preferred values
 ```
-
-`devbox.sh` auto-loads:
-
-1. `./.env`
-2. `./.env.local` (optional override)
 
 You can also load a custom file explicitly:
 
