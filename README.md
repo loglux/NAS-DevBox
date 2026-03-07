@@ -240,24 +240,26 @@ The updated `devbox.sh` already does this by default:
 - `DEVBOX_CODEX_DIR=/volume1/projects/.codex-persist`
 - `DEVBOX_SSH_DIR=/volume1/projects/.ssh-persist`
 
-### Important: file ownership (`ubuntu` vs `loglux`)
+### User and file ownership
 
-If host files appear as `ubuntu` instead of your user, it's a UID/GID mismatch.
+DevBox creates the container user from these values:
 
-This project now supports host-matching IDs via build args:
-
+- `DEVBOX_USER`
 - `DEVBOX_UID`
 - `DEVBOX_GID`
 
-`devbox.sh` defaults these to your current host `id -u` / `id -g`.
+By default, `devbox.sh` uses your current host `id -u` and `id -g`.
+That keeps file ownership in `/workspace` aligned with your host user.
 
-Example (explicit):
+You can still override them explicitly in `.env` or via CLI flags.
+
+Example:
 
 ```bash
 ./devbox.sh --recreate \
-  --user loglux \
-  --uid 1001 \
-  --gid 1001 \
+  --user devuser \
+  --uid 1000 \
+  --gid 1000 \
   --ssh-port 2202 \
   --projects-dir /volume1/projects
 ```
@@ -274,7 +276,7 @@ Start both containers (main + playwright):
 
 ```bash
 ./devbox.sh --playwright --recreate \
-  --user loglux \
+  --user devuser \
   --ssh-port 2202 \
   --playwright-ssh-port 2203
 ```
