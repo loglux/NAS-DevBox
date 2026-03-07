@@ -4,12 +4,14 @@ Run a full Linux development environment on your NAS — safely inside a contain
 
 NAS DevBox turns your NAS into a remote Linux workstation while keeping Docker and storage on the host.
 
-## Origin
+## 📌 Origin
 
 This project started from the architecture described in this article:
 - https://www.linkedin.com/pulse/turning-nas-full-linux-development-environment-docker-sorokin-6o9oe/
 
-## Key features
+---
+
+## ✨ Key Features
 
 - Full Ubuntu environment accessible via SSH
 - No changes to the NAS OS
@@ -21,7 +23,7 @@ Ideal for homelabs, self-hosted setups, and lightweight remote development.
 
 ---
 
-## Architecture
+## 🧱 Architecture
 
 ```
 Your PC ── SSH ──► Dev Container (Ubuntu)
@@ -46,7 +48,7 @@ No changes to the NAS firmware or OS are required.
 
 ---
 
-## Requirements
+## ✅ Requirements
 
 - NAS with Docker installed
 - SSH access to the NAS
@@ -54,9 +56,9 @@ No changes to the NAS firmware or OS are required.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Create a projects directory on the NAS
+### 1. Create A Projects Directory On The NAS
 
 ```bash
 mkdir -p /volume1/projects
@@ -64,7 +66,7 @@ mkdir -p /volume1/projects
 
 ---
 
-### 2. Clone the repository
+### 2. Clone The Repository
 
 ```bash
 mkdir -p /volume1/home/devbox
@@ -74,7 +76,7 @@ git clone https://github.com/loglux/NAS-DevBox.git .
 
 ---
 
-### 3. Start the development container
+### 3. Start The Development Container
 
 Choose:
 
@@ -101,7 +103,7 @@ What `devbox.sh` does:
 
 ---
 
-### 4. Connect via SSH
+### 4. Connect Via SSH
 
 ```bash
 ssh dev@NAS_IP -p 2202
@@ -122,7 +124,7 @@ Convenience paths:
 
 ---
 
-## Default credentials
+## 🔐 Default Credentials
 
 - Username: as specified with `--user`
 - Password: `changeme`
@@ -138,9 +140,9 @@ docker exec -it devbox passwd <user>
 
 ---
 
-## Basic Usage
+## 🛠️ Basic Usage
 
-### Check access to host Docker
+### Check Access To Host Docker
 
 Inside the container:
 
@@ -152,14 +154,14 @@ You should see containers running on the NAS host.
 
 ---
 
-### Passwordless sudo
+### Passwordless Sudo
 
 Passwordless sudo is enabled by default (`DEVBOX_PASSWORDLESS_SUDO=on`).
 To disable it, set `DEVBOX_PASSWORDLESS_SUDO=off` or use `--passwordless-sudo off`.
 
 ---
 
-## Recreate the Container
+## 🔄 Recreate The Container
 
 Recreate removes the existing container and builds a fresh one.
 
@@ -170,7 +172,7 @@ Important:
 - The password resets to `changeme` only if neither `.env` nor CLI sets `DEVBOX_PASS`/`--pass`
 - Existing project data is safe (stored on NAS)
 
-### Recommended recreate command
+### Recommended Recreate Command
 
 ```bash
 ./devbox.sh --recreate \
@@ -181,13 +183,13 @@ Important:
 
 ---
 
-### Password behaviour
+### Password Behaviour
 
 If `--pass` is not provided, the password resets to `changeme`. Change it again after recreation.
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 DevBox can be configured via command-line flags or environment variables.
 
@@ -212,7 +214,7 @@ Running `./devbox.sh` without flags uses script defaults, then values from `./.e
 
 ---
 
-## Security Notes
+## 🛡️ Security Notes
 
 - The container has access to the host Docker socket
 - Anyone with container access can control host containers
@@ -221,7 +223,7 @@ Running `./devbox.sh` without flags uses script defaults, then values from `./.e
 
 ---
 
-## When to use NAS DevBox
+## 🎯 When To Use NAS DevBox
 
 This setup is useful if you want to:
 
@@ -233,13 +235,13 @@ This setup is useful if you want to:
 
 ---
 
-## License
+## 📄 License
 
 MIT
 
 ---
 
-## Persistent Codex/SSH and Playwright
+## 💾 Persistence, Playwright, and Tooling
 
 To avoid losing shell/Codex/SSH settings after recreate, mount one persistent home directory:
 
@@ -252,7 +254,7 @@ Default resolution in `devbox.sh`:
 3. `/home/<user>` if it exists
 4. fallback: `/volume1/projects/.devbox-home/<user>`
 
-### User and file ownership
+### User And File Ownership
 
 DevBox creates the container user from these values:
 
@@ -276,7 +278,7 @@ Example:
   --projects-dir /volume1/projects
 ```
 
-### Workspace compatibility symlink
+### Workspace Compatibility Symlink
 
 Projects are always mounted to:
 
@@ -295,10 +297,16 @@ Control it with:
 - `DEVBOX_WORKSPACE_LINK=on|off`
 - CLI: `--workspace-link on|off`
 
-### Playwright profile (browser sandbox permissions)
+### Playwright Profile (Browser Sandbox Permissions)
 
-To run browser automation reliably in containerized NAS environments, use the dedicated profile:
+When you enable `--playwright`, DevBox starts a second container (`devbox-playwright`) in addition to the main `devbox`.
 
+Why a second container is used:
+- Browser automation often needs relaxed sandbox settings that are not needed for normal CLI development.
+- These permissions are applied only to `devbox-playwright`, while the main `devbox` stays stricter.
+- This keeps day-to-day development and browser automation separated.
+
+Playwright container runtime settings:
 - `security_opt: seccomp=unconfined`
 - `cap_add: SYS_ADMIN`
 - `ipc: host`
@@ -317,9 +325,14 @@ SSH endpoints:
 - Main devbox: `ssh <user>@<NAS_IP> -p 2202`
 - Playwright devbox: `ssh <user>@<NAS_IP> -p 2203`
 
-### Optional post-install (user choice)
+Typical usage:
+- Use `devbox` (`2202`) for normal coding, tooling, and shell work.
+- Use `devbox-playwright` (`2203`) only for browser automation tasks.
+
+### Optional Post-Install (User Choice)
 
 To keep the base image neutral, extra tools are installed via optional post-install scripts.
+This option is independent from the Playwright profile.
 
 Built-in targets:
 
@@ -333,7 +346,7 @@ Run with:
 ./devbox.sh --post-install example
 ```
 
-With Playwright profile:
+Playwright can be combined with any post-install target (optional):
 
 ```bash
 ./devbox.sh --playwright --post-install dev
@@ -345,13 +358,7 @@ AI tooling profile:
 ./devbox.sh --post-install ai
 ```
 
-This installs Node.js/npm plus:
-- `@openai/codex`
-- `@anthropic-ai/claude-code`
-
-References:
-- https://docs.anthropic.com/en/docs/claude-code/setup
-- https://github.com/openai/codex
+This installs Node.js/npm and AI CLI tools (`codex`, `claude`).
 
 Custom script path (absolute or relative to mounted projects directory):
 
@@ -363,7 +370,7 @@ Custom script path (absolute or relative to mounted projects directory):
 
 This allows every user to keep their own tool stack without forcing it into the default image.
 
-### Keep password/settings across recreate via `.env`
+### Keep Password/Settings Across Recreate Via `.env`
 
 Use a local env file so you don't have to pass `--pass` every time:
 

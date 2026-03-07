@@ -21,7 +21,7 @@ Options:
   --playwright                    Also start playwright profile container
   --playwright-ssh-port PORT      SSH port for playwright container (default: 2203)
   --playwright-container NAME     Playwright container name (default: devbox-playwright)
-  --post-install TARGET           Optional post-install script/profile: example | dev | ai | /home/<user>/projects/path/script.sh
+  --post-install TARGET           Optional post-install script/profile: example | dev | ai | /projects/path/script.sh
   --env-file PATH                 Optional env file (default auto-load: ./.env, then ./.env.local)
   --recreate                      Remove existing containers before rebuild
   -h, --help                      Show this help
