@@ -11,6 +11,7 @@ RUN apt update && \
         git \
         curl \
         wget \
+        rsync \
         shellcheck \
         nano \
         vim \
@@ -34,10 +35,14 @@ RUN apt update && \
 # Build-time configuration
 ARG DEVBOX_USER=dev
 ARG DEVBOX_PASS=changeme
+ARG DEVBOX_UID=1000
+ARG DEVBOX_GID=1000
 ARG DOCKER_GID=1000
 
-# Create non-root user
-RUN useradd -m -s /bin/bash "${DEVBOX_USER}" && \
+# Create non-root user with host-matching UID/GID
+RUN if ! getent group "${DEVBOX_GID}" >/dev/null 2>&1; then groupadd -g "${DEVBOX_GID}" "${DEVBOX_USER}"; fi && \
+    PRIMARY_GROUP="$(getent group "${DEVBOX_GID}" | cut -d: -f1)" && \
+    useradd -m -s /bin/bash -u "${DEVBOX_UID}" -g "${PRIMARY_GROUP}" "${DEVBOX_USER}" && \
     echo "${DEVBOX_USER}:${DEVBOX_PASS}" | chpasswd && \
     usermod -aG sudo "${DEVBOX_USER}" && \
     if ! getent group "${DOCKER_GID}" >/dev/null 2>&1; then groupadd -g "${DOCKER_GID}" dockerhost; fi && \

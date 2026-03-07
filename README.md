@@ -225,3 +225,130 @@ This setup is useful if you want to:
 ## License
 
 MIT
+
+---
+
+## Persistent Codex/SSH and Playwright
+
+To avoid losing Codex history/settings and SSH keys after recreate, mount persistent host directories:
+
+- `DEVBOX_CODEX_DIR` -> `/home/<user>/.codex`
+- `DEVBOX_SSH_DIR` -> `/home/<user>/.ssh`
+
+The updated `devbox.sh` already does this by default:
+
+- `DEVBOX_CODEX_DIR=/volume1/projects/.codex-persist`
+- `DEVBOX_SSH_DIR=/volume1/projects/.ssh-persist`
+
+### Important: file ownership (`ubuntu` vs `loglux`)
+
+If host files appear as `ubuntu` instead of your user, it's a UID/GID mismatch.
+
+This project now supports host-matching IDs via build args:
+
+- `DEVBOX_UID`
+- `DEVBOX_GID`
+
+`devbox.sh` defaults these to your current host `id -u` / `id -g`.
+
+Example (explicit):
+
+```bash
+./devbox.sh --recreate \
+  --user loglux \
+  --uid 1001 \
+  --gid 1001 \
+  --ssh-port 2202 \
+  --projects-dir /volume1/projects
+```
+
+### Playwright profile (browser sandbox permissions)
+
+To run browser automation reliably in containerized NAS environments, use the dedicated profile:
+
+- `security_opt: seccomp=unconfined`
+- `cap_add: SYS_ADMIN`
+- `ipc: host`
+
+Start both containers (main + playwright):
+
+```bash
+./devbox.sh --playwright --recreate \
+  --user loglux \
+  --ssh-port 2202 \
+  --playwright-ssh-port 2203
+```
+
+SSH endpoints:
+
+- Main devbox: `ssh <user>@<NAS_IP> -p 2202`
+- Playwright devbox: `ssh <user>@<NAS_IP> -p 2203`
+
+### Optional post-install (user choice)
+
+To keep the base image neutral, extra tools are installed via optional post-install scripts.
+
+Built-in targets:
+
+- `example` -> `/workspace/devbox/scripts/post-install-example.sh`
+- `dev` -> `/workspace/devbox/scripts/post-install-dev.sh`
+- `ai` -> `/workspace/devbox/scripts/post-install-ai.sh`
+
+Run with:
+
+```bash
+./devbox.sh --post-install example
+```
+
+With Playwright profile:
+
+```bash
+./devbox.sh --playwright --post-install dev
+
+AI tooling profile:
+
+```bash
+./devbox.sh --post-install ai
+```
+
+This installs Node.js/npm plus:
+- `@openai/codex`
+- `@anthropic-ai/claude-code`
+
+References:
+- https://docs.anthropic.com/en/docs/claude-code/setup
+- https://github.com/openai/codex
+```
+
+Custom script path (absolute or relative to `/workspace`):
+
+```bash
+./devbox.sh --post-install /workspace/my-scripts/post-install.sh
+# or
+./devbox.sh --post-install my-scripts/post-install.sh
+```
+
+This allows every user to keep their own tool stack without forcing it into the default image.
+
+### Keep password/settings across recreate via `.env`
+
+Use a local env file so you don't have to pass `--pass` every time:
+
+```bash
+cd /volume1/home/simulacra/devbox
+cp .env.example .env
+# edit .env and set DEVBOX_PASS, DEVBOX_USER, UID/GID, ports, paths
+```
+
+`devbox.sh` auto-loads:
+
+1. `./.env`
+2. `./.env.local` (optional override)
+
+You can also load a custom file explicitly:
+
+```bash
+./devbox.sh --env-file /path/to/my.env --recreate
+```
+
+CLI flags always override env values.

@@ -5,14 +5,47 @@ services:
       args:
         DEVBOX_USER: ${DEVBOX_USER:-dev}
         DEVBOX_PASS: ${DEVBOX_PASS:-changeme}
+        DEVBOX_UID: ${DEVBOX_UID:-1000}
+        DEVBOX_GID: ${DEVBOX_GID:-1000}
         DOCKER_GID: ${DOCKER_GID:-1000}
     container_name: ${DEVBOX_CONTAINER_NAME:-devbox}
 
     volumes:
       - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
+      - ${DEVBOX_CODEX_DIR:-/volume1/projects/.codex-persist}:/home/${DEVBOX_USER:-dev}/.codex
+      - ${DEVBOX_SSH_DIR:-/volume1/projects/.ssh-persist}:/home/${DEVBOX_USER:-dev}/.ssh
       - /var/run/docker.sock:/var/run/docker.sock
 
     ports:
       - "${DEVBOX_SSH_PORT:-2202}:22"
+
+    restart: always
+
+  devbox-playwright:
+    profiles: ["playwright"]
+    build:
+      context: .
+      args:
+        DEVBOX_USER: ${DEVBOX_USER:-dev}
+        DEVBOX_PASS: ${DEVBOX_PASS:-changeme}
+        DEVBOX_UID: ${DEVBOX_UID:-1000}
+        DEVBOX_GID: ${DEVBOX_GID:-1000}
+        DOCKER_GID: ${DOCKER_GID:-1000}
+    container_name: ${DEVBOX_PLAYWRIGHT_CONTAINER_NAME:-devbox-playwright}
+
+    volumes:
+      - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
+      - ${DEVBOX_CODEX_DIR:-/volume1/projects/.codex-persist}:/home/${DEVBOX_USER:-dev}/.codex
+      - ${DEVBOX_SSH_DIR:-/volume1/projects/.ssh-persist}:/home/${DEVBOX_USER:-dev}/.ssh
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    ports:
+      - "${DEVBOX_PLAYWRIGHT_SSH_PORT:-2203}:22"
+
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+    ipc: host
 
     restart: always
