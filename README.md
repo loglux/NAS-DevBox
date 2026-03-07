@@ -230,15 +230,13 @@ MIT
 
 ## Persistent Codex/SSH and Playwright
 
-To avoid losing Codex history/settings and SSH keys after recreate, mount persistent host directories:
+To avoid losing shell/Codex/SSH settings after recreate, mount one persistent home directory:
 
-- `DEVBOX_CODEX_DIR` -> `/home/<user>/.codex`
-- `DEVBOX_SSH_DIR` -> `/home/<user>/.ssh`
+- `DEVBOX_HOME_DIR` -> `/home/<user>`
 
-The updated `devbox.sh` already does this by default:
+The updated `devbox.sh` does this by default:
 
-- `DEVBOX_CODEX_DIR=/volume1/projects/.codex-persist`
-- `DEVBOX_SSH_DIR=/volume1/projects/.ssh-persist`
+- `DEVBOX_HOME_DIR=/volume1/projects/.devbox-home`
 
 ### User and file ownership
 

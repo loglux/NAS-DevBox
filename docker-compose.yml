@@ -12,8 +12,7 @@ services:
 
     volumes:
       - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
-      - ${DEVBOX_CODEX_DIR:-/volume1/projects/.codex-persist}:/home/${DEVBOX_USER:-dev}/.codex
-      - ${DEVBOX_SSH_DIR:-/volume1/projects/.ssh-persist}:/home/${DEVBOX_USER:-dev}/.ssh
+      - ${DEVBOX_HOME_DIR:-/volume1/projects/.devbox-home}:/home/${DEVBOX_USER:-dev}
       - /var/run/docker.sock:/var/run/docker.sock
 
     ports:
@@ -35,8 +34,7 @@ services:
 
     volumes:
       - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
-      - ${DEVBOX_CODEX_DIR:-/volume1/projects/.codex-persist}:/home/${DEVBOX_USER:-dev}/.codex
-      - ${DEVBOX_SSH_DIR:-/volume1/projects/.ssh-persist}:/home/${DEVBOX_USER:-dev}/.ssh
+      - ${DEVBOX_HOME_DIR:-/volume1/projects/.devbox-home}:/home/${DEVBOX_USER:-dev}
       - /var/run/docker.sock:/var/run/docker.sock
 
     ports:

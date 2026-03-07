@@ -14,8 +14,7 @@ Options:
   --docker-gid GID                GID of docker socket on NAS (default: 1000)
   --projects-dir PATH             Projects directory on NAS (default: /volume1/projects)
   --container NAME                Main container name (default: devbox)
-  --codex-dir PATH                Persistent Codex dir on host (default: /volume1/projects/.codex-persist)
-  --ssh-dir PATH                  Persistent SSH dir on host (default: /volume1/projects/.ssh-persist)
+  --home-dir PATH                 Persistent home dir on host (default: /volume1/projects/.devbox-home)
   --playwright                    Also start playwright profile container
   --playwright-ssh-port PORT      SSH port for playwright container (default: 2203)
   --playwright-container NAME     Playwright container name (default: devbox-playwright)
@@ -26,7 +25,7 @@ Options:
 
 Examples:
   ./devbox.sh --user dev --ssh-port 2202
-  ./devbox.sh --playwright --post-install example --user loglux --uid 1001 --gid 1001
+  ./devbox.sh --playwright --post-install example --user devuser --uid 1000 --gid 1000
 USAGE
 }
 
@@ -38,8 +37,7 @@ DEVBOX_SSH_PORT="2202"
 DOCKER_GID="1000"
 DEVBOX_PROJECTS_DIR="/volume1/projects"
 DEVBOX_CONTAINER_NAME="devbox"
-DEVBOX_CODEX_DIR="/volume1/projects/.codex-persist"
-DEVBOX_SSH_DIR="/volume1/projects/.ssh-persist"
+DEVBOX_HOME_DIR="/volume1/projects/.devbox-home"
 DEVBOX_PLAYWRIGHT_ENABLED="no"
 DEVBOX_PLAYWRIGHT_SSH_PORT="2203"
 DEVBOX_PLAYWRIGHT_CONTAINER_NAME="devbox-playwright"
@@ -51,16 +49,18 @@ load_env_file() {
   local file="$1"
   [ -z "$file" ] && return 0
   [ -f "$file" ] || return 0
+  set -a
   # shellcheck disable=SC1090
-  set -a; . "$file"; set +a
+  . "$file"
+  set +a
 }
 
 # Auto-load local environment values if present.
 # CLI flags still override these defaults later.
-if [ -f "./.env.local" ]; then
-  load_env_file "./.env.local"
-elif [ -f "./.env" ]; then
+if [ -f "./.env" ]; then
   load_env_file "./.env"
+elif [ -f "./.env.local" ]; then
+  load_env_file "./.env.local"
 fi
 
 # Pre-parse optional env file so explicit CLI flags can still override it.
@@ -83,8 +83,7 @@ while [ $# -gt 0 ]; do
     --docker-gid) DOCKER_GID="${2:-}"; shift 2 ;;
     --projects-dir) DEVBOX_PROJECTS_DIR="${2:-}"; shift 2 ;;
     --container) DEVBOX_CONTAINER_NAME="${2:-}"; shift 2 ;;
-    --codex-dir) DEVBOX_CODEX_DIR="${2:-}"; shift 2 ;;
-    --ssh-dir) DEVBOX_SSH_DIR="${2:-}"; shift 2 ;;
+    --home-dir) DEVBOX_HOME_DIR="${2:-}"; shift 2 ;;
     --playwright) DEVBOX_PLAYWRIGHT_ENABLED="yes"; shift ;;
     --playwright-ssh-port) DEVBOX_PLAYWRIGHT_SSH_PORT="${2:-}"; shift 2 ;;
     --playwright-container) DEVBOX_PLAYWRIGHT_CONTAINER_NAME="${2:-}"; shift 2 ;;
@@ -142,13 +141,13 @@ run_post_install() {
 }
 
 export DEVBOX_USER DEVBOX_PASS DEVBOX_UID DEVBOX_GID DEVBOX_SSH_PORT DOCKER_GID
-export DEVBOX_PROJECTS_DIR DEVBOX_CONTAINER_NAME DEVBOX_CODEX_DIR DEVBOX_SSH_DIR
+export DEVBOX_PROJECTS_DIR DEVBOX_CONTAINER_NAME DEVBOX_HOME_DIR
 export DEVBOX_PLAYWRIGHT_SSH_PORT DEVBOX_PLAYWRIGHT_CONTAINER_NAME
 
 POST_INSTALL_SCRIPT="$(resolve_post_install_script "$POST_INSTALL_TARGET")"
 
-mkdir -p "${DEVBOX_CODEX_DIR}" "${DEVBOX_SSH_DIR}"
-chmod 700 "${DEVBOX_SSH_DIR}" || true
+mkdir -p "${DEVBOX_HOME_DIR}" "${DEVBOX_HOME_DIR}/.ssh"
+chmod 700 "${DEVBOX_HOME_DIR}/.ssh" || true
 
 if [ "${RECREATE}" = "yes" ]; then
   if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
@@ -165,12 +164,11 @@ else
 fi
 
 # Ensure mounted dirs are writable for the selected user
-for container in "${DEVBOX_CONTAINER_NAME}"; do
-  docker exec -u 0 "${container}" sh -lc "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' /workspace '/home/${DEVBOX_USER}/.codex' '/home/${DEVBOX_USER}/.ssh' || true"
-done
+docker exec -u 0 "${DEVBOX_CONTAINER_NAME}" sh -lc \
+  "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' /workspace '/home/${DEVBOX_USER}' || true"
 
 if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
-  docker exec -u 0 "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" sh -lc "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' /workspace '/home/${DEVBOX_USER}/.codex' '/home/${DEVBOX_USER}/.ssh' || true"
+  docker exec -u 0 "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" sh -lc "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' /workspace '/home/${DEVBOX_USER}' || true"
 fi
 
 if [ -n "$POST_INSTALL_SCRIPT" ]; then
