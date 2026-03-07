@@ -9,6 +9,7 @@ services:
         DEVBOX_GID: ${DEVBOX_GID:-1000}
         DOCKER_GID: ${DOCKER_GID:-1000}
     container_name: ${DEVBOX_CONTAINER_NAME:-devbox}
+    hostname: ${DEVBOX_USER:-dev}
 
     volumes:
       - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/projects
@@ -31,6 +32,7 @@ services:
         DEVBOX_GID: ${DEVBOX_GID:-1000}
         DOCKER_GID: ${DOCKER_GID:-1000}
     container_name: ${DEVBOX_PLAYWRIGHT_CONTAINER_NAME:-devbox-playwright}
+    hostname: ${DEVBOX_USER:-dev}-playwright
 
     volumes:
       - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/projects
