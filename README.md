@@ -69,8 +69,8 @@ mkdir -p /volume1/projects
 ### 2. Clone The Repository
 
 ```bash
-mkdir -p /volume1/home/devbox
-cd /volume1/home/devbox
+mkdir -p /volume1/projects/devbox
+cd /volume1/projects/devbox
 git clone https://github.com/loglux/NAS-DevBox.git .
 ```
 
@@ -87,6 +87,15 @@ cp .env.example .env
 # optionally: DEVBOX_HOME_DIR, DEVBOX_START_DIR, DEVBOX_PASSWORDLESS_SUDO
 ```
 
+Minimal example:
+
+```env
+DEVBOX_USER=loglux
+DEVBOX_PASS=your-strong-password
+DEVBOX_SSH_PORT=2202
+DEVBOX_PROJECTS_DIR=/volume1/projects
+```
+
 `devbox.sh` loads config in this order:
 
 1. script defaults
@@ -96,6 +105,33 @@ cp .env.example .env
 5. CLI flags (highest priority)
 
 ---
+
+### 3.1 Configuration Reference (`.env` and CLI)
+
+| Variable              | Description                                  | Default                          |
+| --------------------- | -------------------------------------------- | -------------------------------- |
+| DEVBOX_USER           | Container username                           | dev                              |
+| DEVBOX_PASS           | User password                                | changeme                         |
+| DEVBOX_SSH_PORT       | SSH port                                     | 2202                             |
+| DOCKER_GID            | Docker group ID                              | 1000                             |
+| DEVBOX_UID            | Container user UID                           | host `id -u` (auto if empty)     |
+| DEVBOX_GID            | Container user GID                           | host `id -g` (auto if empty)     |
+| DEVBOX_PROJECTS_DIR   | Projects path on NAS                         | /volume1/projects                |
+| DEVBOX_WORKSPACE_LINK | Create `/workspace` compatibility symlink    | on                               |
+| DEVBOX_START_DIR      | Auto-cd target on interactive login          | /workspace                       |
+| DEVBOX_PASSWORDLESS_SUDO | Passwordless sudo mode                    | on                               |
+| DEVBOX_HOME_DIR       | Persistent home dir on host                  | auto-resolved by `devbox.sh`     |
+| DEVBOX_CONTAINER_NAME | Container name                               | devbox                           |
+
+Flags override environment variables.
+Note: auto-resolution for `DEVBOX_HOME_DIR` applies only when `DEVBOX_HOME_DIR` is empty/unset.
+
+### 3.2 Path Model (Important)
+
+- projects mount: `${DEVBOX_PROJECTS_DIR}` -> `/projects`
+- settings/home mount: `${DEVBOX_HOME_DIR}` -> `/home/<user>`
+- convenience symlink: `/home/<user>/projects` -> `/projects`
+- optional compatibility symlink: `/workspace` -> `/home/<user>/projects` (only when `DEVBOX_WORKSPACE_LINK=on`)
 
 ### 4. Start The Development Container
 
@@ -109,6 +145,12 @@ Full profile (main + playwright + AI tools):
 
 ```bash
 ./devbox.sh --playwright --post-install ai
+```
+
+One-time CLI override example (without editing `.env`):
+
+```bash
+./devbox.sh --user loglux --pass 'your-strong-password' --ssh-port 2202
 ```
 
 What `devbox.sh` does:
@@ -138,18 +180,20 @@ Convenience paths:
 
 ```
 /home/<user>/projects
-/workspace
+/workspace (optional, only when DEVBOX_WORKSPACE_LINK=on)
 ```
 
 ---
 
 ## 🔐 Default Credentials
 
-- Username: as specified with `--user`
-- Password: `changeme`
+- Username: value of `DEVBOX_USER` (or `--user`)
+- Password: value of `DEVBOX_PASS` (or `--pass`)
+- If you do not set them, defaults are `dev` / `changeme`
 
-`changeme` is an intentional bootstrap placeholder required for first login.
-Change it immediately after installation.
+Recommended:
+- set `DEVBOX_USER` and `DEVBOX_PASS` in `.env` before first start
+- use `--user/--pass` only for temporary override
 
 From the NAS host:
 
@@ -171,12 +215,31 @@ docker ps
 
 You should see containers running on the NAS host.
 
+Expected DevBox container names by default:
+- `devbox`
+- `devbox-playwright` (only when started with `--playwright`)
+
+You can customize names via:
+- `DEVBOX_CONTAINER_NAME`
+- `DEVBOX_PLAYWRIGHT_CONTAINER_NAME`
+
+Quick host-side check:
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E 'devbox|devbox-playwright'
+```
+
 ---
 
 ### Passwordless Sudo
 
 Passwordless sudo is enabled by default (`DEVBOX_PASSWORDLESS_SUDO=on`).
 To disable it, set `DEVBOX_PASSWORDLESS_SUDO=off` or use `--passwordless-sudo off`.
+
+Why this is useful:
+- install system packages without interactive password prompts (`sudo apt ...`)
+- run setup/bootstrap scripts non-interactively
+- simplify automation from CLI tools inside the container
 
 ---
 
@@ -197,36 +260,15 @@ Important:
 ./devbox.sh --recreate
 ```
 
----
+Recommended recreate flow:
 
-### Password Behaviour
+```bash
+# main + playwright + AI tooling
+./devbox.sh --recreate --playwright --post-install ai
 
-If `--pass` is not provided, the password resets to `changeme`. Change it again after recreation.
-
----
-
-## ⚙️ Configuration
-
-DevBox can be configured via command-line flags or environment variables.
-
-| Variable              | Description                                  | Default                          |
-| --------------------- | -------------------------------------------- | -------------------------------- |
-| DEVBOX_USER           | Container username                           | dev                              |
-| DEVBOX_PASS           | User password                                | changeme                         |
-| DEVBOX_SSH_PORT       | SSH port                                     | 2202                             |
-| DOCKER_GID            | Docker group ID                              | 1000                             |
-| DEVBOX_UID            | Container user UID                           | host `id -u` (auto if empty)     |
-| DEVBOX_GID            | Container user GID                           | host `id -g` (auto if empty)     |
-| DEVBOX_PROJECTS_DIR   | Projects path on NAS                         | /volume1/projects                |
-| DEVBOX_WORKSPACE_LINK | Create `/workspace` compatibility symlink    | on                               |
-| DEVBOX_START_DIR      | Auto-cd target on interactive login          | /workspace                       |
-| DEVBOX_PASSWORDLESS_SUDO | Passwordless sudo mode                    | on                               |
-| DEVBOX_HOME_DIR       | Persistent home dir on host                  | auto-resolved by `devbox.sh`     |
-| DEVBOX_CONTAINER_NAME | Container name                               | devbox                           |
-
-Flags override environment variables.
-
-Running `./devbox.sh` without flags uses script defaults, then values from `./.env` and `./.env.local` when present.
+# custom env file
+./devbox.sh --recreate --env-file /path/to/my.env
+```
 
 ---
 
@@ -248,12 +290,6 @@ This setup is useful if you want to:
 - Run disposable dev environments
 - Use NAS as a remote build machine
 - Manage Docker workloads remotely
-
----
-
-## 📄 License
-
-MIT
 
 ---
 
@@ -386,19 +422,8 @@ Custom script path (absolute or relative to mounted projects directory):
 
 This allows every user to keep their own tool stack without forcing it into the default image.
 
-### Keep Password/Settings Across Recreate Via `.env`
+---
 
-If you keep stable values in `.env`, recreate stays one command and does not require retyping flags.
+## 📄 License
 
-```bash
-cp .env.example .env
-# edit .env once and keep your preferred values
-```
-
-You can also load a custom file explicitly:
-
-```bash
-./devbox.sh --env-file /path/to/my.env --recreate
-```
-
-CLI flags always override env values.
+MIT
