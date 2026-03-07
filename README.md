@@ -32,7 +32,8 @@ Your PC ── SSH ──► Dev Container (Ubuntu)
 
 - The NAS runs Docker normally
 - DevBox runs an Ubuntu container with development tools
-- Your projects live on the NAS and are mounted into `/home/<user>/projects` by default
+- Your projects live on the NAS and are mounted into `/projects`
+- `/home/<user>/projects` is a symlink to `/projects`
 - `/workspace` can be enabled as a compatibility symlink
 - The container controls host Docker via the Docker socket
 
@@ -89,7 +90,7 @@ What `devbox.sh` does:
 - passes your parameters to Docker build/runtime
 - builds or rebuilds the DevBox image
 - starts the container in background mode
-- mounts your NAS projects directory to `/home/<user>/projects` by default
+- mounts your NAS projects directory to `/projects`
 - connects container to host Docker via `/var/run/docker.sock`
 - if `--recreate` is used, removes old container before fresh start
 
@@ -101,15 +102,16 @@ What `devbox.sh` does:
 ssh dev@NAS_IP -p 2202
 ```
 
-Your projects will be available inside the container at:
+Your projects are available inside the container at:
+
+```
+/projects
+```
+
+Convenience paths:
 
 ```
 /home/<user>/projects
-```
-
-Optional compatibility path:
-
-```
 /workspace
 ```
 
@@ -126,7 +128,7 @@ Change it immediately after installation.
 From the NAS host:
 
 ```bash
-docker exec -it devbox passwd dev
+docker exec -it devbox passwd <user>
 ```
 
 ---
@@ -145,19 +147,10 @@ You should see containers running on the NAS host.
 
 ---
 
-### Optional: Passwordless sudo
+### Passwordless sudo
 
-Inside the container:
-
-```bash
-sudo visudo
-```
-
-Add:
-
-```
-dev ALL=(ALL) NOPASSWD:ALL
-```
+Passwordless sudo is enabled by default (`DEVBOX_PASSWORDLESS_SUDO=on`).
+To disable it, set `DEVBOX_PASSWORDLESS_SUDO=off` or use `--passwordless-sudo off`.
 
 ---
 
@@ -167,9 +160,9 @@ Recreate removes the existing container and builds a fresh one.
 
 Important:
 
-- DevBox does not remember previous settings
-- You must pass all required parameters again
-- The password resets unless `--pass` is specified
+- Recreate replaces containers and applies current config values
+- Keep your preferred values in `.env` so you do not need to pass all flags each time
+- The password resets to `changeme` only if neither `.env` nor CLI sets `DEVBOX_PASS`/`--pass`
 - Existing project data is safe (stored on NAS)
 
 ### Recommended recreate command
@@ -199,14 +192,18 @@ DevBox can be configured via command-line flags or environment variables.
 | DEVBOX_PASS           | User password                                | changeme                         |
 | DEVBOX_SSH_PORT       | SSH port                                     | 2202                             |
 | DOCKER_GID            | Docker group ID                              | 1000                             |
-| DEVBOX_PROJECTS_DIR   | Projects path on NAS                         | required                         |
-| DEVBOX_WORKSPACE_LINK | Create `/workspace` compatibility symlink     | on                               |
-| DEVBOX_HOME_DIR       | Persistent home dir on host                  | /volume1/projects/.devbox-home   |
+| DEVBOX_UID            | Container user UID                           | host `id -u` (auto if empty)     |
+| DEVBOX_GID            | Container user GID                           | host `id -g` (auto if empty)     |
+| DEVBOX_PROJECTS_DIR   | Projects path on NAS                         | /volume1/projects                |
+| DEVBOX_WORKSPACE_LINK | Create `/workspace` compatibility symlink    | on                               |
+| DEVBOX_START_DIR      | Auto-cd target on interactive login          | /workspace                       |
+| DEVBOX_PASSWORDLESS_SUDO | Passwordless sudo mode                    | on                               |
+| DEVBOX_HOME_DIR       | Persistent home dir on host                  | auto-resolved by `devbox.sh`     |
 | DEVBOX_CONTAINER_NAME | Container name                               | devbox                           |
 
 Flags override environment variables.
 
-Running `./devbox.sh` without flags uses defaults from the script and does not reuse previous values.
+Running `./devbox.sh` without flags uses script defaults, then values from `./.env` and `./.env.local` when present.
 
 ---
 
@@ -243,9 +240,12 @@ To avoid losing shell/Codex/SSH settings after recreate, mount one persistent ho
 
 - `DEVBOX_HOME_DIR` -> `/home/<user>`
 
-The updated `devbox.sh` does this by default:
+Default resolution in `devbox.sh`:
 
-- `DEVBOX_HOME_DIR=/volume1/projects/.devbox-home`
+1. explicit `DEVBOX_HOME_DIR` / `--home-dir`
+2. `/volume1/home/<user>` if it exists
+3. `/home/<user>` if it exists
+4. fallback: `/volume1/projects/.devbox-home/<user>`
 
 ### User and file ownership
 
@@ -275,11 +275,15 @@ Example:
 
 Projects are always mounted to:
 
-- `/home/<user>/projects`
+- `/projects`
+
+User convenience symlink:
+
+- `/home/<user>/projects` -> `/projects`
 
 Optional symlink:
 
-- `/workspace` -> `/home/<user>/projects`
+- `/workspace` -> `/home/<user>/projects` -> `/projects`
 
 Control it with:
 
@@ -314,9 +318,9 @@ To keep the base image neutral, extra tools are installed via optional post-inst
 
 Built-in targets:
 
-- `example` -> `/home/<user>/projects/devbox/scripts/post-install-example.sh`
-- `dev` -> `/home/<user>/projects/devbox/scripts/post-install-dev.sh`
-- `ai` -> `/home/<user>/projects/devbox/scripts/post-install-ai.sh`
+- `example` -> `/projects/devbox/scripts/post-install-example.sh`
+- `dev` -> `/projects/devbox/scripts/post-install-dev.sh`
+- `ai` -> `/projects/devbox/scripts/post-install-ai.sh`
 
 Run with:
 
@@ -347,7 +351,7 @@ References:
 Custom script path (absolute or relative to mounted projects directory):
 
 ```bash
-./devbox.sh --post-install /home/<user>/projects/my-scripts/post-install.sh
+./devbox.sh --post-install /projects/my-scripts/post-install.sh
 # or
 ./devbox.sh --post-install my-scripts/post-install.sh
 ```

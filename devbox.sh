@@ -257,8 +257,8 @@ EOF
    sed -i '/### DEVBOX SOURCE BASHRC ###/,/### \\/DEVBOX SOURCE BASHRC ###/d' \"\$LOGIN_PROFILE\"; \
    cat >> \"\$LOGIN_PROFILE\" <<'EOF'
 ### DEVBOX SOURCE BASHRC ###
-if [ -f "\$HOME/.bashrc" ]; then
-  . "\$HOME/.bashrc"
+if [ -f ~/.bashrc ]; then
+  . ~/.bashrc
 fi
 ### /DEVBOX SOURCE BASHRC ###
 EOF
@@ -289,8 +289,8 @@ EOF
      sed -i '/### DEVBOX SOURCE BASHRC ###/,/### \\/DEVBOX SOURCE BASHRC ###/d' \"\$LOGIN_PROFILE\"; \
      cat >> \"\$LOGIN_PROFILE\" <<'EOF'
 ### DEVBOX SOURCE BASHRC ###
-if [ -f "\$HOME/.bashrc" ]; then
-  . "\$HOME/.bashrc"
+if [ -f ~/.bashrc ]; then
+  . ~/.bashrc
 fi
 ### /DEVBOX SOURCE BASHRC ###
 EOF
