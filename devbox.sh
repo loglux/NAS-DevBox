@@ -180,6 +180,40 @@ run_post_install() {
   docker exec -u 0 "$container" sh -lc "bash '$script_path'"
 }
 
+configure_container_runtime() {
+  local container="$1"
+  docker exec -u 0 "$container" sh -lc \
+    "set -e; \
+     mkdir -p '/home/${DEVBOX_USER}'; \
+     ln -sfn '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}/projects'; \
+     if [ '${DEVBOX_WORKSPACE_LINK}' = 'on' ]; then [ -e /workspace ] && [ ! -L /workspace ] && rm -rf /workspace || true; ln -sfn '/home/${DEVBOX_USER}/projects' /workspace; else [ -L /workspace ] && rm -f /workspace || true; fi; \
+     PROFILE='/home/${DEVBOX_USER}/.bashrc'; \
+     touch \"\$PROFILE\"; \
+     sed -i '/### DEVBOX AUTO-CD ###/,/### \\/DEVBOX AUTO-CD ###/d' \"\$PROFILE\"; \
+     cat >> \"\$PROFILE\" <<EOF
+### DEVBOX AUTO-CD ###
+if [ -n \"\\\$PS1\" ]; then
+  if [ -d \"${DEVBOX_START_DIR}\" ]; then
+    cd \"${DEVBOX_START_DIR}\"
+  elif [ -d \"/workspace\" ]; then
+    cd \"/workspace\"
+  fi
+fi
+### /DEVBOX AUTO-CD ###
+EOF
+     LOGIN_PROFILE='/home/${DEVBOX_USER}/.profile'; \
+     touch \"\$LOGIN_PROFILE\"; \
+     sed -i '/### DEVBOX SOURCE BASHRC ###/,/### \\/DEVBOX SOURCE BASHRC ###/d' \"\$LOGIN_PROFILE\"; \
+     cat >> \"\$LOGIN_PROFILE\" <<'EOF'
+### DEVBOX SOURCE BASHRC ###
+if [ -f ~/.bashrc ]; then
+  . ~/.bashrc
+fi
+### /DEVBOX SOURCE BASHRC ###
+EOF
+     if [ '${DEVBOX_PASSWORDLESS_SUDO}' = 'on' ]; then echo '${DEVBOX_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-devbox-nopasswd; chmod 0440 /etc/sudoers.d/90-devbox-nopasswd; else rm -f /etc/sudoers.d/90-devbox-nopasswd; fi"
+}
+
 export DEVBOX_USER DEVBOX_PASS DEVBOX_UID DEVBOX_GID DEVBOX_SSH_PORT DOCKER_GID
 export DEVBOX_PROJECTS_DIR DEVBOX_PROJECTS_MOUNT DEVBOX_WORKSPACE_LINK DEVBOX_START_DIR DEVBOX_PASSWORDLESS_SUDO DEVBOX_CONTAINER_NAME DEVBOX_HOME_DIR
 export DEVBOX_PLAYWRIGHT_SSH_PORT DEVBOX_PLAYWRIGHT_CONTAINER_NAME
@@ -233,68 +267,10 @@ else
   "${COMPOSE[@]}" up -d --build
 fi
 
-docker exec -u 0 "${DEVBOX_CONTAINER_NAME}" sh -lc \
-  "set -e; \
-   mkdir -p '/home/${DEVBOX_USER}'; \
-   ln -sfn '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}/projects'; \
-   if [ '${DEVBOX_WORKSPACE_LINK}' = 'on' ]; then [ -e /workspace ] && [ ! -L /workspace ] && rm -rf /workspace || true; ln -sfn '/home/${DEVBOX_USER}/projects' /workspace; else [ -L /workspace ] && rm -f /workspace || true; fi; \
-   PROFILE='/home/${DEVBOX_USER}/.bashrc'; \
-   touch \"\$PROFILE\"; \
-   sed -i '/### DEVBOX AUTO-CD ###/,/### \\/DEVBOX AUTO-CD ###/d' \"\$PROFILE\"; \
-   cat >> \"\$PROFILE\" <<EOF
-### DEVBOX AUTO-CD ###
-if [ -n \"\\\$PS1\" ]; then
-  if [ -d \"${DEVBOX_START_DIR}\" ]; then
-    cd \"${DEVBOX_START_DIR}\"
-  elif [ -d \"/workspace\" ]; then
-    cd \"/workspace\"
-  fi
-fi
-### /DEVBOX AUTO-CD ###
-EOF
-   LOGIN_PROFILE='/home/${DEVBOX_USER}/.profile'; \
-   touch \"\$LOGIN_PROFILE\"; \
-   sed -i '/### DEVBOX SOURCE BASHRC ###/,/### \\/DEVBOX SOURCE BASHRC ###/d' \"\$LOGIN_PROFILE\"; \
-   cat >> \"\$LOGIN_PROFILE\" <<'EOF'
-### DEVBOX SOURCE BASHRC ###
-if [ -f ~/.bashrc ]; then
-  . ~/.bashrc
-fi
-### /DEVBOX SOURCE BASHRC ###
-EOF
-   if [ '${DEVBOX_PASSWORDLESS_SUDO}' = 'on' ]; then echo '${DEVBOX_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-devbox-nopasswd; chmod 0440 /etc/sudoers.d/90-devbox-nopasswd; else rm -f /etc/sudoers.d/90-devbox-nopasswd; fi"
+configure_container_runtime "${DEVBOX_CONTAINER_NAME}"
 
 if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
-  docker exec -u 0 "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" sh -lc \
-    "set -e; \
-     mkdir -p '/home/${DEVBOX_USER}'; \
-     ln -sfn '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}/projects'; \
-     if [ '${DEVBOX_WORKSPACE_LINK}' = 'on' ]; then [ -e /workspace ] && [ ! -L /workspace ] && rm -rf /workspace || true; ln -sfn '/home/${DEVBOX_USER}/projects' /workspace; else [ -L /workspace ] && rm -f /workspace || true; fi; \
-     PROFILE='/home/${DEVBOX_USER}/.bashrc'; \
-     touch \"\$PROFILE\"; \
-     sed -i '/### DEVBOX AUTO-CD ###/,/### \\/DEVBOX AUTO-CD ###/d' \"\$PROFILE\"; \
-     cat >> \"\$PROFILE\" <<EOF
-### DEVBOX AUTO-CD ###
-if [ -n \"\\\$PS1\" ]; then
-  if [ -d \"${DEVBOX_START_DIR}\" ]; then
-    cd \"${DEVBOX_START_DIR}\"
-  elif [ -d \"/workspace\" ]; then
-    cd \"/workspace\"
-  fi
-fi
-### /DEVBOX AUTO-CD ###
-EOF
-     LOGIN_PROFILE='/home/${DEVBOX_USER}/.profile'; \
-     touch \"\$LOGIN_PROFILE\"; \
-     sed -i '/### DEVBOX SOURCE BASHRC ###/,/### \\/DEVBOX SOURCE BASHRC ###/d' \"\$LOGIN_PROFILE\"; \
-     cat >> \"\$LOGIN_PROFILE\" <<'EOF'
-### DEVBOX SOURCE BASHRC ###
-if [ -f ~/.bashrc ]; then
-  . ~/.bashrc
-fi
-### /DEVBOX SOURCE BASHRC ###
-EOF
-     if [ '${DEVBOX_PASSWORDLESS_SUDO}' = 'on' ]; then echo '${DEVBOX_USER} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-devbox-nopasswd; chmod 0440 /etc/sudoers.d/90-devbox-nopasswd; else rm -f /etc/sudoers.d/90-devbox-nopasswd; fi"
+  configure_container_runtime "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}"
 fi
 
 # Ensure mounted dirs are writable for the selected user
