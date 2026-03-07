@@ -13,13 +13,14 @@ Options:
   --ssh-port PORT                 Host SSH port for main devbox (default: 2202)
   --docker-gid GID                GID of docker socket on NAS (default: 1000)
   --projects-dir PATH             Projects directory on NAS (default: /volume1/projects)
+  --workspace-link MODE           /workspace compatibility link: on|off (default: on)
   --container NAME                Main container name (default: devbox)
   --home-dir PATH                 Persistent home dir on host (default: /volume1/projects/.devbox-home)
   --playwright                    Also start playwright profile container
   --playwright-ssh-port PORT      SSH port for playwright container (default: 2203)
   --playwright-container NAME     Playwright container name (default: devbox-playwright)
-  --post-install TARGET           Optional post-install script/profile: example | dev | ai | /workspace/path/script.sh
-  --env-file PATH                 Optional env file (default auto-load: ./.env.local, then ./.env)
+  --post-install TARGET           Optional post-install script/profile: example | dev | ai | /home/<user>/projects/path/script.sh
+  --env-file PATH                 Optional env file (default auto-load: ./.env, then ./.env.local)
   --recreate                      Remove existing containers before rebuild
   -h, --help                      Show this help
 
@@ -36,6 +37,8 @@ DEVBOX_GID="$(id -g)"
 DEVBOX_SSH_PORT="2202"
 DOCKER_GID="1000"
 DEVBOX_PROJECTS_DIR="/volume1/projects"
+DEVBOX_PROJECTS_MOUNT="/projects"
+DEVBOX_WORKSPACE_LINK="on"
 DEVBOX_CONTAINER_NAME="devbox"
 DEVBOX_HOME_DIR="/volume1/projects/.devbox-home"
 DEVBOX_PLAYWRIGHT_ENABLED="no"
@@ -57,11 +60,9 @@ load_env_file() {
 
 # Auto-load local environment values if present.
 # CLI flags still override these defaults later.
-if [ -f "./.env" ]; then
-  load_env_file "./.env"
-elif [ -f "./.env.local" ]; then
-  load_env_file "./.env.local"
-fi
+# Load order: .env then .env.local (override).
+[ -f "./.env" ] && load_env_file "./.env"
+[ -f "./.env.local" ] && load_env_file "./.env.local"
 
 # Pre-parse optional env file so explicit CLI flags can still override it.
 ARGS=("$@")
@@ -82,6 +83,7 @@ while [ $# -gt 0 ]; do
     --ssh-port) DEVBOX_SSH_PORT="${2:-}"; shift 2 ;;
     --docker-gid) DOCKER_GID="${2:-}"; shift 2 ;;
     --projects-dir) DEVBOX_PROJECTS_DIR="${2:-}"; shift 2 ;;
+    --workspace-link) DEVBOX_WORKSPACE_LINK="${2:-}"; shift 2 ;;
     --container) DEVBOX_CONTAINER_NAME="${2:-}"; shift 2 ;;
     --home-dir) DEVBOX_HOME_DIR="${2:-}"; shift 2 ;;
     --playwright) DEVBOX_PLAYWRIGHT_ENABLED="yes"; shift ;;
@@ -99,6 +101,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+if [ "${DEVBOX_WORKSPACE_LINK}" != "on" ] && [ "${DEVBOX_WORKSPACE_LINK}" != "off" ]; then
+  echo "Error: --workspace-link must be 'on' or 'off'." >&2
+  exit 1
+fi
+
 if docker compose version >/dev/null 2>&1; then
   COMPOSE=(docker compose)
 elif docker-compose version >/dev/null 2>&1; then
@@ -115,14 +122,14 @@ resolve_post_install_script() {
     return 0
   fi
   case "$target" in
-    example) echo "/workspace/devbox/scripts/post-install-example.sh" ;;
-    dev) echo "/workspace/devbox/scripts/post-install-dev.sh" ;;
-    ai) echo "/workspace/devbox/scripts/post-install-ai.sh" ;;
+    example) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-example.sh" ;;
+    dev) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-dev.sh" ;;
+    ai) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-ai.sh" ;;
     *)
       if [[ "$target" = /* ]]; then
         echo "$target"
       else
-        echo "/workspace/$target"
+        echo "${DEVBOX_PROJECTS_MOUNT}/$target"
       fi
       ;;
   esac
@@ -141,7 +148,7 @@ run_post_install() {
 }
 
 export DEVBOX_USER DEVBOX_PASS DEVBOX_UID DEVBOX_GID DEVBOX_SSH_PORT DOCKER_GID
-export DEVBOX_PROJECTS_DIR DEVBOX_CONTAINER_NAME DEVBOX_HOME_DIR
+export DEVBOX_PROJECTS_DIR DEVBOX_PROJECTS_MOUNT DEVBOX_WORKSPACE_LINK DEVBOX_CONTAINER_NAME DEVBOX_HOME_DIR
 export DEVBOX_PLAYWRIGHT_SSH_PORT DEVBOX_PLAYWRIGHT_CONTAINER_NAME
 
 POST_INSTALL_SCRIPT="$(resolve_post_install_script "$POST_INSTALL_TARGET")"
@@ -163,12 +170,21 @@ else
   "${COMPOSE[@]}" up -d --build
 fi
 
-# Ensure mounted dirs are writable for the selected user
 docker exec -u 0 "${DEVBOX_CONTAINER_NAME}" sh -lc \
-  "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' /workspace '/home/${DEVBOX_USER}' || true"
+  "mkdir -p '/home/${DEVBOX_USER}'; ln -sfn '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}/projects'; if [ '${DEVBOX_WORKSPACE_LINK}' = 'on' ]; then ln -sfn '/home/${DEVBOX_USER}/projects' /workspace; else [ -L /workspace ] && rm -f /workspace || true; fi"
 
 if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
-  docker exec -u 0 "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" sh -lc "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' /workspace '/home/${DEVBOX_USER}' || true"
+  docker exec -u 0 "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" sh -lc \
+    "mkdir -p '/home/${DEVBOX_USER}'; ln -sfn '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}/projects'; if [ '${DEVBOX_WORKSPACE_LINK}' = 'on' ]; then ln -sfn '/home/${DEVBOX_USER}/projects' /workspace; else [ -L /workspace ] && rm -f /workspace || true; fi"
+fi
+
+# Ensure mounted dirs are writable for the selected user
+docker exec -u 0 "${DEVBOX_CONTAINER_NAME}" sh -lc \
+  "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}' || true"
+
+if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
+  docker exec -u 0 "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" sh -lc \
+    "chown -R '${DEVBOX_USER}:${DEVBOX_USER}' '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}' || true"
 fi
 
 if [ -n "$POST_INSTALL_SCRIPT" ]; then
@@ -183,6 +199,8 @@ echo "Container is ready."
 echo "+------------------------------------------------------------+"
 echo "| User: ${DEVBOX_USER} (UID:${DEVBOX_UID} GID:${DEVBOX_GID})"
 echo "| Main SSH: ${DEVBOX_SSH_PORT}"
+echo "| Projects mount: ${DEVBOX_PROJECTS_DIR} -> ${DEVBOX_PROJECTS_MOUNT}"
+echo "| /workspace link: ${DEVBOX_WORKSPACE_LINK}"
 if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
   echo "| Playwright SSH: ${DEVBOX_PLAYWRIGHT_SSH_PORT}"
 fi

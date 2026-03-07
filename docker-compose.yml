@@ -11,7 +11,7 @@ services:
     container_name: ${DEVBOX_CONTAINER_NAME:-devbox}
 
     volumes:
-      - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
+      - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/projects
       - ${DEVBOX_HOME_DIR:-/volume1/projects/.devbox-home}:/home/${DEVBOX_USER:-dev}
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -33,7 +33,7 @@ services:
     container_name: ${DEVBOX_PLAYWRIGHT_CONTAINER_NAME:-devbox-playwright}
 
     volumes:
-      - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/workspace
+      - ${DEVBOX_PROJECTS_DIR:-/volume1/projects}:/projects
       - ${DEVBOX_HOME_DIR:-/volume1/projects/.devbox-home}:/home/${DEVBOX_USER:-dev}
       - /var/run/docker.sock:/var/run/docker.sock
 

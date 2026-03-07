@@ -32,7 +32,8 @@ Your PC ── SSH ──► Dev Container (Ubuntu)
 
 - The NAS runs Docker normally
 - DevBox runs an Ubuntu container with development tools
-- Your projects live on the NAS and are mounted into `/workspace`
+- Your projects live on the NAS and are mounted into `/home/<user>/projects` by default
+- `/workspace` can be enabled as a compatibility symlink
 - The container controls host Docker via the Docker socket
 
 No changes to the NAS firmware or OS are required.
@@ -88,7 +89,7 @@ What `devbox.sh` does:
 - passes your parameters to Docker build/runtime
 - builds or rebuilds the DevBox image
 - starts the container in background mode
-- mounts your NAS projects directory to `/workspace`
+- mounts your NAS projects directory to `/home/<user>/projects` by default
 - connects container to host Docker via `/var/run/docker.sock`
 - if `--recreate` is used, removes old container before fresh start
 
@@ -101,6 +102,12 @@ ssh dev@NAS_IP -p 2202
 ```
 
 Your projects will be available inside the container at:
+
+```
+/home/<user>/projects
+```
+
+Optional compatibility path:
 
 ```
 /workspace
@@ -186,14 +193,16 @@ If `--pass` is not provided, the password resets to `changeme`. Change it again 
 
 DevBox can be configured via command-line flags or environment variables.
 
-| Variable              | Description          | Default  |
-| --------------------- | -------------------- | -------- |
-| DEVBOX_USER           | Container username   | dev      |
-| DEVBOX_PASS           | User password        | changeme |
-| DEVBOX_SSH_PORT       | SSH port             | 2202     |
-| DOCKER_GID            | Docker group ID      | 1000     |
-| DEVBOX_PROJECTS_DIR   | Projects path on NAS | required |
-| DEVBOX_CONTAINER_NAME | Container name       | devbox   |
+| Variable              | Description                                  | Default                          |
+| --------------------- | -------------------------------------------- | -------------------------------- |
+| DEVBOX_USER           | Container username                           | dev                              |
+| DEVBOX_PASS           | User password                                | changeme                         |
+| DEVBOX_SSH_PORT       | SSH port                                     | 2202                             |
+| DOCKER_GID            | Docker group ID                              | 1000                             |
+| DEVBOX_PROJECTS_DIR   | Projects path on NAS                         | required                         |
+| DEVBOX_WORKSPACE_LINK | Create `/workspace` compatibility symlink     | on                               |
+| DEVBOX_HOME_DIR       | Persistent home dir on host                  | /volume1/projects/.devbox-home   |
+| DEVBOX_CONTAINER_NAME | Container name                               | devbox                           |
 
 Flags override environment variables.
 
@@ -247,7 +256,7 @@ DevBox creates the container user from these values:
 - `DEVBOX_GID`
 
 By default, `devbox.sh` uses your current host `id -u` and `id -g`.
-That keeps file ownership in `/workspace` aligned with your host user.
+That keeps file ownership in your mounted projects path aligned with your host user.
 
 You can still override them explicitly in `.env` or via CLI flags.
 
@@ -261,6 +270,21 @@ Example:
   --ssh-port 2202 \
   --projects-dir /volume1/projects
 ```
+
+### Workspace compatibility symlink
+
+Projects are always mounted to:
+
+- `/home/<user>/projects`
+
+Optional symlink:
+
+- `/workspace` -> `/home/<user>/projects`
+
+Control it with:
+
+- `DEVBOX_WORKSPACE_LINK=on|off`
+- CLI: `--workspace-link on|off`
 
 ### Playwright profile (browser sandbox permissions)
 
@@ -290,9 +314,9 @@ To keep the base image neutral, extra tools are installed via optional post-inst
 
 Built-in targets:
 
-- `example` -> `/workspace/devbox/scripts/post-install-example.sh`
-- `dev` -> `/workspace/devbox/scripts/post-install-dev.sh`
-- `ai` -> `/workspace/devbox/scripts/post-install-ai.sh`
+- `example` -> `/home/<user>/projects/devbox/scripts/post-install-example.sh`
+- `dev` -> `/home/<user>/projects/devbox/scripts/post-install-dev.sh`
+- `ai` -> `/home/<user>/projects/devbox/scripts/post-install-ai.sh`
 
 Run with:
 
@@ -304,6 +328,7 @@ With Playwright profile:
 
 ```bash
 ./devbox.sh --playwright --post-install dev
+```
 
 AI tooling profile:
 
@@ -318,12 +343,11 @@ This installs Node.js/npm plus:
 References:
 - https://docs.anthropic.com/en/docs/claude-code/setup
 - https://github.com/openai/codex
-```
 
-Custom script path (absolute or relative to `/workspace`):
+Custom script path (absolute or relative to mounted projects directory):
 
 ```bash
-./devbox.sh --post-install /workspace/my-scripts/post-install.sh
+./devbox.sh --post-install /home/<user>/projects/my-scripts/post-install.sh
 # or
 ./devbox.sh --post-install my-scripts/post-install.sh
 ```
