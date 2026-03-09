@@ -35,14 +35,14 @@ Chrome (headless, --no-sandbox, inside devbox-playwright)
 ./devbox.sh --playwright
 ```
 
-### 2. Install start-cdp.sh into the container
+### 2. Locate start-cdp.sh inside the container
 
-```bash
-docker cp scripts/start-cdp.sh devbox-playwright:/usr/local/bin/start-cdp.sh
-docker exec devbox-playwright chmod +x /usr/local/bin/start-cdp.sh
+The `scripts/` directory is already accessible inside `devbox-playwright` via
+the `/projects` volume mount — no copying required:
+
 ```
-
-Repeat after `--recreate`.
+/projects/devbox/scripts/start-cdp.sh
+```
 
 ### 3. Get the container IP
 
@@ -67,7 +67,7 @@ docker inspect devbox-playwright \
 Start Chrome and the port forwarder inside the container:
 
 ```bash
-docker exec devbox-playwright /usr/local/bin/start-cdp.sh
+docker exec devbox-playwright bash /projects/devbox/scripts/start-cdp.sh
 ```
 
 Verify:
@@ -151,6 +151,8 @@ Chrome binds to `127.0.0.1` regardless of `--remote-debugging-address`.
 The `start-cdp.sh` script handles the forwarding. Check the logs:
 
 ```bash
+docker exec devbox-playwright bash /projects/devbox/scripts/start-cdp.sh
+# then check logs if it fails:
 docker exec devbox-playwright cat /tmp/chrome-cdp.log
 docker exec devbox-playwright cat /tmp/cdp-forwarder.log
 ```
