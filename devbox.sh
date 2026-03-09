@@ -21,7 +21,7 @@ Options:
   --playwright                    Also start playwright profile container
   --playwright-ssh-port PORT      SSH port for playwright container (default: 2203)
   --playwright-container NAME     Playwright container name (default: devbox-playwright)
-  --post-install TARGET           Optional post-install script/profile: example | dev | ai | /projects/path/script.sh
+  --post-install TARGET           Optional post-install script/profile: example | dev | ai | migrate | /projects/path/script.sh
   --env-file PATH                 Optional env file (default auto-load: ./.env, then ./.env.local)
   --recreate                      Remove existing containers before rebuild
   -h, --help                      Show this help
@@ -158,6 +158,7 @@ resolve_post_install_script() {
     example) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-example.sh" ;;
     dev) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-dev.sh" ;;
     ai) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-ai.sh" ;;
+    migrate) echo "${DEVBOX_PROJECTS_MOUNT}/devbox/scripts/post-install-migrate.sh" ;;
     *)
       if [[ "$target" = /* ]]; then
         echo "$target"
@@ -223,14 +224,6 @@ POST_INSTALL_SCRIPT="$(resolve_post_install_script "$POST_INSTALL_TARGET")"
 mkdir -p "${DEVBOX_PROJECTS_DIR}"
 mkdir -p "${DEVBOX_HOME_DIR}" "${DEVBOX_HOME_DIR}/.ssh"
 chmod 700 "${DEVBOX_HOME_DIR}/.ssh" || true
-
-# One-time migration: recover legacy Codex settings stored under projects/codex/.codex.
-LEGACY_CODEX_DIR="${DEVBOX_PROJECTS_DIR}/codex/.codex"
-TARGET_CODEX_DIR="${DEVBOX_HOME_DIR}/.codex"
-if [ ! -e "${TARGET_CODEX_DIR}" ] && [ -d "${LEGACY_CODEX_DIR}" ]; then
-  echo "Migrating legacy Codex settings: ${LEGACY_CODEX_DIR} -> ${TARGET_CODEX_DIR}"
-  cp -a "${LEGACY_CODEX_DIR}" "${TARGET_CODEX_DIR}"
-fi
 
 # One-time migration: populate SSH settings in mounted home when empty.
 TARGET_SSH_DIR="${DEVBOX_HOME_DIR}/.ssh"

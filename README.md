@@ -395,6 +395,7 @@ Built-in targets:
 - `example` -> `/projects/devbox/scripts/post-install-example.sh`
 - `dev` -> `/projects/devbox/scripts/post-install-dev.sh`
 - `ai` -> `/projects/devbox/scripts/post-install-ai.sh`
+- `migrate` -> `/projects/devbox/scripts/post-install-migrate.sh` (one-time optional recovery)
 
 Run with:
 
@@ -415,6 +416,15 @@ AI tooling profile:
 ```
 
 This installs Node.js/npm and AI CLI tools (`codex`, `claude`).
+
+Migration profile (explicit opt-in, no hardcoded source paths):
+
+```bash
+# in /projects/devbox/.env or .env.local
+MIGRATE_CODEX_FROM=/projects/<your-old-path>/.codex
+MIGRATE_BASH_HISTORY_FROM=/projects/<your-old-path>/.bash_history
+./devbox.sh --post-install migrate
+```
 
 Custom script path (absolute or relative to mounted projects directory):
 
