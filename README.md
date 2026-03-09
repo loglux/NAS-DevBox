@@ -122,9 +122,11 @@ DEVBOX_PROJECTS_DIR=/volume1/projects
 | DEVBOX_PASSWORDLESS_SUDO | Passwordless sudo mode                    | on                               |
 | DEVBOX_HOME_DIR       | Persistent home dir on host                  | auto-resolved by `devbox.sh`     |
 | DEVBOX_CONTAINER_NAME | Container name                               | devbox                           |
+| POST_INSTALL_TARGET   | Post-install target(s), comma-separated      | empty                            |
 
 Flags override environment variables.
 Note: auto-resolution for `DEVBOX_HOME_DIR` applies only when `DEVBOX_HOME_DIR` is empty/unset.
+Note: `POST_INSTALL_TARGET` supports one or many targets, for example `ai` or `dev,ai`.
 
 ### 3.2 Path Model (Important)
 
@@ -401,6 +403,14 @@ Run with:
 
 ```bash
 ./devbox.sh --post-install example
+```
+
+Multiple targets in one run:
+
+```bash
+./devbox.sh --post-install dev --post-install ai
+# or
+./devbox.sh --post-install dev,ai
 ```
 
 Playwright can be combined with any post-install target (optional):

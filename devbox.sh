@@ -21,7 +21,8 @@ Options:
   --playwright                    Also start playwright profile container
   --playwright-ssh-port PORT      SSH port for playwright container (default: 2203)
   --playwright-container NAME     Playwright container name (default: devbox-playwright)
-  --post-install TARGET           Optional post-install script/profile: example | dev | ai | migrate | /projects/path/script.sh
+  --post-install TARGET           Optional post-install script/profile(s): example | dev | ai | migrate | /projects/path/script.sh
+                                  Repeat flag or use comma list: --post-install dev --post-install ai / --post-install dev,ai
   --env-file PATH                 Optional env file (default auto-load: ./.env, then ./.env.local)
   --recreate                      Remove existing containers before rebuild
   -h, --help                      Show this help
@@ -49,6 +50,8 @@ DEVBOX_PLAYWRIGHT_ENABLED="no"
 DEVBOX_PLAYWRIGHT_SSH_PORT="2203"
 DEVBOX_PLAYWRIGHT_CONTAINER_NAME="devbox-playwright"
 POST_INSTALL_TARGET=""
+POST_INSTALL_SET_BY_CLI="no"
+POST_INSTALL_TARGETS=()
 DEVBOX_ENV_FILE=""
 RECREATE="no"
 
@@ -95,7 +98,19 @@ while [ $# -gt 0 ]; do
     --playwright) DEVBOX_PLAYWRIGHT_ENABLED="yes"; shift ;;
     --playwright-ssh-port) DEVBOX_PLAYWRIGHT_SSH_PORT="${2:-}"; shift 2 ;;
     --playwright-container) DEVBOX_PLAYWRIGHT_CONTAINER_NAME="${2:-}"; shift 2 ;;
-    --post-install) POST_INSTALL_TARGET="${2:-}"; shift 2 ;;
+    --post-install)
+      if [ "${POST_INSTALL_SET_BY_CLI}" != "yes" ]; then
+        POST_INSTALL_TARGETS=()
+        POST_INSTALL_SET_BY_CLI="yes"
+      fi
+      IFS=',' read -r -a _post_items <<< "${2:-}"
+      for _post_item in "${_post_items[@]}"; do
+        _post_item="${_post_item#"${_post_item%%[![:space:]]*}"}"
+        _post_item="${_post_item%"${_post_item##*[![:space:]]}"}"
+        [ -n "${_post_item}" ] && POST_INSTALL_TARGETS+=("${_post_item}")
+      done
+      shift 2
+      ;;
     --env-file) DEVBOX_ENV_FILE="${2:-}"; shift 2 ;; # already loaded in pre-parse
     --recreate) RECREATE="yes"; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -106,6 +121,15 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
+
+if [ "${POST_INSTALL_SET_BY_CLI}" != "yes" ] && [ -n "${POST_INSTALL_TARGET}" ]; then
+  IFS=',' read -r -a _post_items <<< "${POST_INSTALL_TARGET}"
+  for _post_item in "${_post_items[@]}"; do
+    _post_item="${_post_item#"${_post_item%%[![:space:]]*}"}"
+    _post_item="${_post_item%"${_post_item##*[![:space:]]}"}"
+    [ -n "${_post_item}" ] && POST_INSTALL_TARGETS+=("${_post_item}")
+  done
+fi
 
 if [ "${DEVBOX_WORKSPACE_LINK}" != "on" ] && [ "${DEVBOX_WORKSPACE_LINK}" != "off" ]; then
   echo "Error: --workspace-link must be 'on' or 'off'." >&2
@@ -219,7 +243,13 @@ export DEVBOX_USER DEVBOX_PASS DEVBOX_UID DEVBOX_GID DEVBOX_SSH_PORT DOCKER_GID
 export DEVBOX_PROJECTS_DIR DEVBOX_PROJECTS_MOUNT DEVBOX_WORKSPACE_LINK DEVBOX_START_DIR DEVBOX_PASSWORDLESS_SUDO DEVBOX_CONTAINER_NAME DEVBOX_HOME_DIR
 export DEVBOX_PLAYWRIGHT_SSH_PORT DEVBOX_PLAYWRIGHT_CONTAINER_NAME
 
-POST_INSTALL_SCRIPT="$(resolve_post_install_script "$POST_INSTALL_TARGET")"
+POST_INSTALL_SCRIPTS=()
+if [ "${#POST_INSTALL_TARGETS[@]}" -gt 0 ]; then
+  for _post_target in "${POST_INSTALL_TARGETS[@]}"; do
+    _post_script="$(resolve_post_install_script "$_post_target")"
+    [ -n "${_post_script}" ] && POST_INSTALL_SCRIPTS+=("${_post_script}")
+  done
+fi
 
 mkdir -p "${DEVBOX_PROJECTS_DIR}"
 mkdir -p "${DEVBOX_HOME_DIR}" "${DEVBOX_HOME_DIR}/.ssh"
@@ -275,11 +305,13 @@ if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
     "chown -R '${DEVBOX_USER}' '${DEVBOX_PROJECTS_MOUNT}' '/home/${DEVBOX_USER}' || true"
 fi
 
-if [ -n "$POST_INSTALL_SCRIPT" ]; then
-  run_post_install "${DEVBOX_CONTAINER_NAME}" "$POST_INSTALL_SCRIPT"
-  if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
-    run_post_install "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" "$POST_INSTALL_SCRIPT"
-  fi
+if [ "${#POST_INSTALL_SCRIPTS[@]}" -gt 0 ]; then
+  for _post_script in "${POST_INSTALL_SCRIPTS[@]}"; do
+    run_post_install "${DEVBOX_CONTAINER_NAME}" "${_post_script}"
+    if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
+      run_post_install "${DEVBOX_PLAYWRIGHT_CONTAINER_NAME}" "${_post_script}"
+    fi
+  done
 fi
 
 echo
@@ -295,8 +327,11 @@ echo "| Passwordless sudo: ${DEVBOX_PASSWORDLESS_SUDO}"
 if [ "${DEVBOX_PLAYWRIGHT_ENABLED}" = "yes" ]; then
   echo "| Playwright SSH: ${DEVBOX_PLAYWRIGHT_SSH_PORT}"
 fi
-if [ -n "$POST_INSTALL_SCRIPT" ]; then
-  echo "| Post-install: ${POST_INSTALL_SCRIPT}"
+if [ "${#POST_INSTALL_SCRIPTS[@]}" -gt 0 ]; then
+  echo "| Post-install:"
+  for _post_script in "${POST_INSTALL_SCRIPTS[@]}"; do
+    echo "|   - ${_post_script}"
+  done
 fi
 if [ "${DEVBOX_PASS}" = "changeme" ]; then
   echo "| Password: changeme (default)."
