@@ -77,6 +77,10 @@ RUN sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/ss
 
 ENV LANG=C.UTF-8
 
+# Playwright CDP helper — start Chrome + port forwarder inside devbox-playwright
+COPY scripts/start-cdp.sh /usr/local/bin/start-cdp.sh
+RUN chmod +x /usr/local/bin/start-cdp.sh
+
 # Start in projects directory on login
 RUN echo "cd /workspace" >> "/home/${DEVBOX_USER}/.bashrc"
 
