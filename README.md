@@ -381,6 +381,10 @@ Typical usage:
 - Use `devbox` (`2202`) for normal coding, tooling, and shell work.
 - Use `devbox-playwright` (`2203`) only for browser automation tasks.
 
+For connecting external tools (Playwright scripts, MCP clients, Claude Code) to
+the container's Chrome instance via CDP, see
+[docs/playwright-cdp-setup.md](docs/playwright-cdp-setup.md).
+
 ### Optional Post-Install (User Choice)
 
 To keep the base image neutral, extra tools are installed via optional post-install scripts.
