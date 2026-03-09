@@ -22,6 +22,7 @@ services:
     restart: always
 
   devbox-playwright:
+
     profiles: ["playwright"]
     build:
       context: .
@@ -49,3 +50,6 @@ services:
     ipc: host
 
     restart: always
+
+    command: >
+      bash -c "start-cdp.sh; exec /usr/sbin/sshd -D"
