@@ -77,6 +77,15 @@ RUN sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/ss
 
 ENV LANG=C.UTF-8
 
+# Google Chrome — required for devbox-playwright CDP automation
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+        > /etc/apt/sources.list.d/google-chrome.list && \
+    apt-get update && \
+    apt-get install -y google-chrome-stable && \
+    apt-get clean
+
 # Playwright CDP helper — start Chrome + port forwarder inside devbox-playwright
 COPY scripts/start-cdp.sh /usr/local/bin/start-cdp.sh
 RUN chmod +x /usr/local/bin/start-cdp.sh
