@@ -32,6 +32,7 @@ services:
         DEVBOX_UID: ${DEVBOX_UID:-1000}
         DEVBOX_GID: ${DEVBOX_GID:-1000}
         DOCKER_GID: ${DOCKER_GID:-1000}
+        PLAYWRIGHT_TOOLS: "true"
     container_name: ${DEVBOX_PLAYWRIGHT_CONTAINER_NAME:-devbox-playwright}
     hostname: ${DEVBOX_USER:-dev}-playwright
 

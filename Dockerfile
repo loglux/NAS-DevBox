@@ -77,19 +77,20 @@ RUN sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/ss
 
 ENV LANG=C.UTF-8
 
-# Google Chrome — required for devbox-playwright CDP automation
-RUN install -m 0755 -d /etc/apt/keyrings && \
-    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg && \
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
-        > /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get update && \
-    apt-get install -y google-chrome-stable && \
-    apt-get clean
-
-# Playwright CDP helpers
+# Playwright CDP tooling — only installed when PLAYWRIGHT_TOOLS=true (devbox-playwright profile)
+ARG PLAYWRIGHT_TOOLS=false
 COPY scripts/start-cdp.sh /usr/local/bin/start-cdp.sh
 COPY scripts/playwright-mcp.sh /usr/local/bin/playwright-mcp.sh
-RUN chmod +x /usr/local/bin/start-cdp.sh /usr/local/bin/playwright-mcp.sh
+RUN chmod +x /usr/local/bin/start-cdp.sh /usr/local/bin/playwright-mcp.sh && \
+    if [ "$PLAYWRIGHT_TOOLS" = "true" ]; then \
+        install -m 0755 -d /etc/apt/keyrings && \
+        curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg && \
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+            > /etc/apt/sources.list.d/google-chrome.list && \
+        apt-get update && \
+        apt-get install -y google-chrome-stable && \
+        apt-get clean; \
+    fi
 
 # Start in projects directory on login
 RUN echo "cd /workspace" >> "/home/${DEVBOX_USER}/.bashrc"
