@@ -108,21 +108,21 @@ DEVBOX_PROJECTS_DIR=/volume1/projects
 
 ### 3.1 Configuration Reference (`.env` and CLI)
 
-| Variable              | Description                                  | Default                          |
-| --------------------- | -------------------------------------------- | -------------------------------- |
-| DEVBOX_USER           | Container username                           | dev                              |
-| DEVBOX_PASS           | User password                                | changeme                         |
-| DEVBOX_SSH_PORT       | SSH port                                     | 2202                             |
-| DOCKER_GID            | Docker group ID                              | 1000                             |
-| DEVBOX_UID            | Container user UID                           | host `id -u` (auto if empty)     |
-| DEVBOX_GID            | Container user GID                           | host `id -g` (auto if empty)     |
-| DEVBOX_PROJECTS_DIR   | Projects path on NAS                         | /volume1/projects                |
-| DEVBOX_WORKSPACE_LINK | Create `/workspace` compatibility symlink    | on                               |
-| DEVBOX_START_DIR      | Auto-cd target on interactive login          | /workspace                       |
-| DEVBOX_PASSWORDLESS_SUDO | Passwordless sudo mode                    | on                               |
-| DEVBOX_HOME_DIR       | Persistent home dir on host                  | auto-resolved by `devbox.sh`     |
-| DEVBOX_CONTAINER_NAME | Container name                               | devbox                           |
-| POST_INSTALL_TARGET   | Post-install target(s), comma-separated      | empty                            |
+| Variable                 | CLI flag                 | Description                               | Default                       |
+| ------------------------ | ------------------------ | ----------------------------------------- | ----------------------------- |
+| DEVBOX_USER              | `--user`                 | Container username                        | dev                           |
+| DEVBOX_PASS              | `--pass`                 | User password                             | changeme                      |
+| DEVBOX_SSH_PORT          | `--ssh-port`             | SSH port                                  | 2202                          |
+| DOCKER_GID               | `--docker-gid`           | Docker group ID                           | 1000                          |
+| DEVBOX_UID               | `--uid`                  | Container user UID                        | host `id -u` (auto if empty) |
+| DEVBOX_GID               | `--gid`                  | Container user GID                        | host `id -g` (auto if empty) |
+| DEVBOX_PROJECTS_DIR      | `--projects-dir`         | Projects path on NAS                      | /volume1/projects             |
+| DEVBOX_WORKSPACE_LINK    | `--workspace-link`       | Create `/workspace` compatibility symlink | on                            |
+| DEVBOX_START_DIR         | `--start-dir`            | Auto-cd target on interactive login       | /workspace                    |
+| DEVBOX_PASSWORDLESS_SUDO | `--passwordless-sudo`    | Passwordless sudo mode                    | on                            |
+| DEVBOX_HOME_DIR          | `--home-dir`             | Persistent home dir on host               | auto-resolved by `devbox.sh`  |
+| DEVBOX_CONTAINER_NAME    | `--container`            | Container name                            | devbox                        |
+| POST_INSTALL_TARGET      | `--post-install`         | Post-install target(s), comma-separated   | empty                         |
 
 Flags override environment variables.
 Note: auto-resolution for `DEVBOX_HOME_DIR` applies only when `DEVBOX_HOME_DIR` is empty/unset.
