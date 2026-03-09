@@ -137,13 +137,15 @@ script `scripts/playwright-mcp.sh` which resolves the container IP automatically
 ```json
 {
   "playwright": {
-    "command": "/projects/devbox/scripts/playwright-mcp.sh"
+    "command": "/usr/local/bin/playwright-mcp.sh"
   }
 }
 ```
 
-The script uses `docker inspect` to find the current IP of `devbox-playwright`
-at startup — no hardcoded IPs, works after container recreates.
+`playwright-mcp.sh` is baked into the devbox image at build time — available at
+`/usr/local/bin/playwright-mcp.sh` regardless of where the repo was cloned.
+It uses `docker inspect` to find the current IP of `devbox-playwright` at startup —
+no hardcoded IPs, works after container recreates.
 
 Override the container name if needed:
 

@@ -86,9 +86,10 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
     apt-get install -y google-chrome-stable && \
     apt-get clean
 
-# Playwright CDP helper — start Chrome + port forwarder inside devbox-playwright
+# Playwright CDP helpers
 COPY scripts/start-cdp.sh /usr/local/bin/start-cdp.sh
-RUN chmod +x /usr/local/bin/start-cdp.sh
+COPY scripts/playwright-mcp.sh /usr/local/bin/playwright-mcp.sh
+RUN chmod +x /usr/local/bin/start-cdp.sh /usr/local/bin/playwright-mcp.sh
 
 # Start in projects directory on login
 RUN echo "cd /workspace" >> "/home/${DEVBOX_USER}/.bashrc"
