@@ -119,11 +119,7 @@ export default defineConfig({
 
 ### MCP client (any tool that supports @playwright/mcp)
 
-```bash
-npx @playwright/mcp@latest --cdp-endpoint http://localhost:9223
-```
-
-Or in an `.mcp.json` / MCP server config:
+If your MCP client runs **directly on the NAS host**, use `localhost`:
 
 ```json
 {
@@ -132,6 +128,27 @@ Or in an `.mcp.json` / MCP server config:
     "args": ["@playwright/mcp@latest", "--cdp-endpoint", "http://localhost:9223"]
   }
 }
+```
+
+If your MCP client runs **inside the devbox container**, `localhost:9223` is not
+reachable — the port mapping only works at the NAS host level. Use the wrapper
+script `scripts/playwright-mcp.sh` which resolves the container IP automatically:
+
+```json
+{
+  "playwright": {
+    "command": "/projects/devbox/scripts/playwright-mcp.sh"
+  }
+}
+```
+
+The script uses `docker inspect` to find the current IP of `devbox-playwright`
+at startup — no hardcoded IPs, works after container recreates.
+
+Override the container name if needed:
+
+```bash
+DEVBOX_PLAYWRIGHT_CONTAINER_NAME=my-playwright npx ...
 ```
 
 #### Claude Code (specific case)
@@ -144,8 +161,8 @@ Claude Code loads MCP config from these locations (lowest → highest priority):
 | User | `~/.claude/mcp.json` | All projects |
 | Project | `.mcp.json` in project root | This project only |
 
-Edit whichever level suits your workflow — the config format is the same as above.
-Restart Claude Code after editing.
+Since Claude Code runs inside `devbox`, use `playwright-mcp.sh` as the command.
+Restart Claude Code after editing the config.
 
 ---
 
