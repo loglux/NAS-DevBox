@@ -42,6 +42,7 @@ services:
 
     ports:
       - "${DEVBOX_PLAYWRIGHT_SSH_PORT:-2203}:22"
+      - "${DEVBOX_PLAYWRIGHT_CDP_PORT:-9223}:9223"
 
     security_opt:
       - seccomp:unconfined

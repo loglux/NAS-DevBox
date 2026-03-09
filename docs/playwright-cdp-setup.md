@@ -14,7 +14,10 @@ Your tool (script / MCP client / AI assistant)
       │
       │  CDP over HTTP/WebSocket
       ▼
-<container_ip>:9223   ← Python TCP proxy inside devbox-playwright
+localhost:9223         ← host port mapped from container (docker-compose ports)
+      │
+      ▼
+0.0.0.0:9223          ← Python TCP proxy inside devbox-playwright
       │
       ▼
 127.0.0.1:9222        ← Chrome DevTools Protocol
@@ -76,7 +79,7 @@ docker exec devbox-playwright start-cdp.sh
 Verify:
 
 ```bash
-curl http://172.30.0.2:9223/json/version
+curl http://localhost:9223/json/version
 ```
 
 ---
@@ -88,7 +91,7 @@ curl http://172.30.0.2:9223/json/version
 ```js
 import { chromium } from 'playwright'
 
-const browser = await chromium.connectOverCDP('http://172.30.0.2:9223')
+const browser = await chromium.connectOverCDP('http://localhost:9223')
 const page = await browser.newPage()
 await page.goto('http://your-app')
 ```
@@ -99,7 +102,7 @@ await page.goto('http://your-app')
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
-    browser = p.chromium.connect_over_cdp('http://172.30.0.2:9223')
+    browser = p.chromium.connect_over_cdp('http://localhost:9223')
     page = browser.new_page()
     page.goto('http://your-app')
 ```
@@ -109,7 +112,7 @@ with sync_playwright() as p:
 ```js
 export default defineConfig({
   use: {
-    connectOptions: { wsEndpoint: 'http://172.30.0.2:9223' },
+    connectOptions: { wsEndpoint: 'http://localhost:9223' },
   },
 })
 ```
@@ -117,7 +120,7 @@ export default defineConfig({
 ### MCP client (any tool that supports @playwright/mcp)
 
 ```bash
-npx @playwright/mcp@latest --cdp-endpoint http://172.30.0.2:9223
+npx @playwright/mcp@latest --cdp-endpoint http://localhost:9223
 ```
 
 Or in an `.mcp.json` / MCP server config:
@@ -126,7 +129,7 @@ Or in an `.mcp.json` / MCP server config:
 {
   "playwright": {
     "command": "npx",
-    "args": ["@playwright/mcp@latest", "--cdp-endpoint", "http://172.30.0.2:9223"]
+    "args": ["@playwright/mcp@latest", "--cdp-endpoint", "http://localhost:9223"]
   }
 }
 ```
