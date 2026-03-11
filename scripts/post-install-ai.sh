@@ -42,7 +42,7 @@ if ! command -v node >/dev/null 2>&1; then
     | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
   chmod a+r /etc/apt/keyrings/nodesource.gpg
   . /etc/os-release
-  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
     > /etc/apt/sources.list.d/nodesource.list
   apt-get update
   apt-get install -y --no-install-recommends nodejs
